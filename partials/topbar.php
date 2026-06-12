@@ -27,11 +27,24 @@ $fg  = $avatarTextColors[$role] ?? '#0ea5e9';
   <!-- Right side -->
   <div class="flex items-center gap-4 ml-auto">
     <!-- Notification -->
-    <button style="background:#ffffff;border:1px solid #eaecf0;border-radius:50%;color:#64748b;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;position:relative;transition:all 0.2s;" title="Notifikasi"
-      onmouseover="this.style.background='#f8fafc';this.style.color='#1a1d1f'" onmouseout="this.style.background='#ffffff';this.style.color='#64748b'">
-      <span class="material-symbols-outlined" style="font-size:20px;">notifications</span>
-      <span style="position:absolute;top:10px;right:10px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid #ffffff;"></span>
-    </button>
+    <div style="position:relative;">
+      <button onclick="document.getElementById('notifDropdown').classList.toggle('hidden')" style="background:#ffffff;border:1px solid #eaecf0;border-radius:50%;color:#64748b;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;position:relative;transition:all 0.2s;" title="Notifikasi"
+        onmouseover="this.style.background='#f8fafc';this.style.color='#1a1d1f'" onmouseout="this.style.background='#ffffff';this.style.color='#64748b'">
+        <span class="material-symbols-outlined" style="font-size:20px;">notifications</span>
+        <span id="notifBadge" class="hidden" style="position:absolute;top:10px;right:10px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid #ffffff;"></span>
+      </button>
+
+      <!-- Dropdown Notifikasi -->
+      <div id="notifDropdown" class="hidden" style="position:absolute;top:48px;right:0;width:320px;background:#ffffff;border:1px solid #eaecf0;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.05);z-index:50;overflow:hidden;">
+        <div style="padding:16px;border-bottom:1px solid #eaecf0;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
+          <h3 style="font-size:14px;font-weight:700;color:#1a1d1f;margin:0;">Notifikasi</h3>
+          <span id="notifCount" style="background:#ef4444;color:#ffffff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;">0 Baru</span>
+        </div>
+        <div id="notifList" style="max-height:300px;overflow-y:auto;padding:8px 0;">
+          <div style="padding:24px 16px;text-align:center;color:#94a3b8;font-size:13px;">Sedang memuat...</div>
+        </div>
+      </div>
+    </div>
 
     <!-- Security button (admin only) -->
     <?php if (hasRole('admin')): ?>
@@ -54,3 +67,58 @@ $fg  = $avatarTextColors[$role] ?? '#0ea5e9';
     </a>
   </div>
 </header>
+
+<!-- Notifikasi Real-time Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function fetchNotifications() {
+    fetch('/simpeg_mini/api_notifications.php')
+      .then(r => r.json())
+      .then(data => {
+        const badge = document.getElementById('notifBadge');
+        const count = document.getElementById('notifCount');
+        const list = document.getElementById('notifList');
+        
+        if (data.count > 0) {
+          badge.classList.remove('hidden');
+          count.textContent = data.count + ' Baru';
+        } else {
+          badge.classList.add('hidden');
+          count.textContent = '0 Baru';
+        }
+        
+        if (data.items.length > 0) {
+          list.innerHTML = data.items.map(item => `
+            <a href="${item.link}" style="display:flex;gap:12px;padding:12px 16px;text-decoration:none;border-bottom:1px solid #f1f5f9;transition:background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+              <div style="width:36px;height:36px;border-radius:50%;background:${item.bg};color:${item.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-symbols-outlined" style="font-size:18px;">${item.icon}</span>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:#1a1d1f;margin-bottom:2px;">${item.title}</div>
+                <div style="font-size:12px;color:#64748b;margin-bottom:4px;line-height:1.4;">${item.message}</div>
+                <div style="font-size:11px;color:#94a3b8;font-weight:500;">${item.time}</div>
+              </div>
+            </a>
+          `).join('');
+        } else {
+          list.innerHTML = '<div style="padding:32px 16px;text-align:center;color:#94a3b8;font-size:13px;"><span class="material-symbols-outlined" style="font-size:32px;color:#e2e8f0;margin-bottom:8px;display:block;">notifications_off</span>Belum ada notifikasi baru</div>';
+        }
+      })
+      .catch(err => console.error('Error fetching notifs:', err));
+  }
+
+  // Panggil pertama kali
+  fetchNotifications();
+  // Polling setiap 10 detik
+  setInterval(fetchNotifications, 10000);
+
+  // Tutup dropdown saat klik di luar
+  window.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('notifDropdown');
+    const button = dropdown.previousElementSibling;
+    if (!dropdown.contains(e.target) && !button.contains(e.target) && !dropdown.classList.contains('hidden')) {
+      dropdown.classList.add('hidden');
+    }
+  });
+});
+</script>

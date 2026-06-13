@@ -13,13 +13,13 @@ require_once __DIR__ . '/config/session.php';
 
 // Jika sudah login, redirect ke dashboard
 if (isLoggedIn()) {
-    redirect('/simpeg_mini/dashboard.php');
+    redirect('/simpekabjmk/dashboard.php');
 }
 
 // Cek remember me cookie — auto login jika ada
 checkRememberMe();
 if (isLoggedIn()) {
-    redirect('/simpeg_mini/dashboard.php');
+    redirect('/simpekabjmk/dashboard.php');
 }
 
 $errors  = [];
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setFlash('success', "Selamat datang, " . explode(',', $user['nama'])[0] . "!");
 
                 // Redirect ke halaman sebelumnya atau dashboard
-                $redirectTo = $_SESSION['redirect_after_login'] ?? '/simpeg_mini/dashboard.php';
+                $redirectTo = $_SESSION['redirect_after_login'] ?? '/simpekabjmk/dashboard.php';
                 unset($_SESSION['redirect_after_login']);
                 redirect($redirectTo);
 
@@ -175,7 +175,7 @@ $csrfToken = generateCsrfToken();
     <!-- Brand Header -->
     <div style="text-align:center;margin-bottom:32px;">
       <div style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;margin-bottom:16px;">
-        <img src="/simpeg_mini/assets/logo_jomokerto.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.05));" />
+        <img src="/simpekabjmk/assets/logo_jomokerto.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.05));" />
       </div>
       <h1 class="section-title" style="font-size:32px;margin-bottom:8px;">SIMPEKAB JOMOKERTO</h1>
       <p style="color:#64748b;font-weight:500;font-size:14px;letter-spacing:0.02em;">Sistem Informasi Kepegawaian Kabupaten Jomokerto</p>
@@ -203,14 +203,14 @@ $csrfToken = generateCsrfToken();
       </div>
       <?php endif; ?>
 
-      <form method="POST" action="/simpeg_mini/login.php" id="login-form" novalidate>
+      <form method="POST" action="/simpekabjmk/login.php" id="login-form" novalidate>
         <?= csrfInput() ?>
 
         <div style="margin-bottom:20px;">
-          <label class="label" for="email">Email Pegawai</label>
+          <label class="label" for="email">Email</label>
           <div style="position:relative;">
             <span class="material-symbols-outlined" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:20px;">mail</span>
-            <input class="input-field" type="email" id="email" name="email" value="<?= e($email) ?>" placeholder="pegawai@simpeg.test" required autocomplete="email" autofocus style="padding-left:44px;"/>
+            <input class="input-field" type="email" id="email" name="email" value="<?= e($email) ?>" placeholder="nama@simpeg.test" required autocomplete="email" autofocus style="padding-left:44px;"/>
           </div>
         </div>
 
@@ -230,7 +230,7 @@ $csrfToken = generateCsrfToken();
             <input type="checkbox" name="remember" id="remember" style="width:16px;height:16px;border-radius:4px;border:1px solid #cbd5e1;accent-color:#ffb800;"/>
             <span style="color:#64748b;font-size:13px;font-weight:500;">Ingat Saya</span>
           </label>
-          <a href="/simpeg_mini/lupa_password.php" style="color:#ffb800;font-size:13px;font-weight:600;text-decoration:none;">Lupa Sandi?</a>
+          <a href="/simpekabjmk/lupa_password.php" style="color:#ffb800;font-size:13px;font-weight:600;text-decoration:none;">Lupa Sandi?</a>
         </div>
 
         <button type="submit" id="login-btn" class="btn-primary" style="width:100%;padding:14px;">

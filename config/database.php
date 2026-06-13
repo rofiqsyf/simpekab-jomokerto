@@ -6,7 +6,7 @@
 
 define('DB_HOST', 'localhost');
 define('DB_PORT', '3306');
-define('DB_NAME', 'simpeg_db');
+define('DB_NAME', 'simpekabjmk');
 define('DB_USER', 'root');
 define('DB_PASS', '');       // Laragon default: '' | XAMPP default: ''
 define('DB_CHARSET', 'utf8mb4');
@@ -49,7 +49,7 @@ function renderDbError(): string {
     <p>Tidak dapat terhubung ke MySQL. Pastikan:</p>
     <ul style="color:#bbc9cf;">
       <li>XAMPP/Laragon sudah berjalan (Apache + MySQL)</li>
-      <li>Database <code>simpeg_db</code> sudah dibuat</li>
+      <li>Database <code>simpekabjmk</code> sudah dibuat</li>
       <li>Kredensial di <code>config/database.php</code> sudah benar</li>
     </ul>
     <p>Lihat <code>README.md</code> untuk petunjuk instalasi.</p>

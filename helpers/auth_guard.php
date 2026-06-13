@@ -23,7 +23,7 @@ function requireLogin(): void
         // Simpan URL yang ingin diakses agar bisa redirect setelah login
         $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
         $_SESSION['flash_error'] = 'Silakan login terlebih dahulu untuk mengakses halaman ini.';
-        header('Location: /simpeg_mini/login.php');
+        header('Location: /simpekabjmk/login.php');
         exit;
     }
 }
@@ -71,7 +71,7 @@ function renderForbiddenPage(?string $userRole, array $allowedRoles): string
         <h2 style="color:#1a1d1f;font-size:24px;font-weight:700;margin:0 0 16px;">Akses Ditolak</h2>
         <p style="color:#64748b;margin-bottom:8px;font-size:15px;">Role Anda: <strong style="color:#3b82f6;background:#eff6ff;padding:4px 8px;border-radius:6px;">' . strtoupper(htmlspecialchars($userRole ?? '')) . '</strong></p>
         <p style="color:#64748b;margin-bottom:32px;font-size:15px;">Halaman ini hanya untuk: <strong style="color:#f59e0b;background:#fffbeb;padding:4px 8px;border-radius:6px;">' . htmlspecialchars($rolesText) . '</strong></p>
-        <a href="/simpeg_mini/dashboard.php" class="btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;justify-content:center;width:100%;">
+        <a href="/simpekabjmk/dashboard.php" class="btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;justify-content:center;width:100%;">
           <span class="material-symbols-outlined">arrow_back</span>
           Kembali ke Dashboard
         </a>

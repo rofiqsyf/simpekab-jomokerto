@@ -59,7 +59,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['login_time'])) {
             ]);
         }
         session_destroy();
-        header('Location: /simpeg_mini/login.php?timeout=1');
+        header('Location: /simpekabjmk/login.php?timeout=1');
         exit;
     }
     // Perbarui last activity

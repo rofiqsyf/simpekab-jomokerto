@@ -9,20 +9,20 @@ require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/helpers/auth_guard.php';
 require_once __DIR__ . '/helpers/functions.php';
 
-requireRole(['admin']);
+requireRole(['super_admin', 'admin_bkpsdm']);
 
 $currentPage = 'pegawai';
 $pageTitle   = 'Reset Password';
 $errors      = [];
 
 $id = (int)($_GET['id'] ?? 0);
-if ($id <= 0) redirect('/simpeg_mini/pegawai.php');
+if ($id <= 0) redirect('/simpekabjmk/pegawai.php');
 
 // Fetch pegawai
 $stmt = $pdo->prepare("SELECT u.id, u.nama, u.email, p.posisi FROM users u LEFT JOIN pegawai p ON p.user_id=u.id WHERE u.id=?");
 $stmt->execute([$id]);
 $pegawai = $stmt->fetch();
-if (!$pegawai) { setFlash('error','Pegawai tidak ditemukan.'); redirect('/simpeg_mini/pegawai.php'); }
+if (!$pegawai) { setFlash('error','Pegawai tidak ditemukan.'); redirect('/simpekabjmk/pegawai.php'); }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validateCsrfToken();
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         logActivity(currentUser()['id'], 'PASSWORD_RESET', "Reset password untuk: {$pegawai['email']}", 'warning');
         setFlash('success', "Password {$pegawai['nama']} berhasil direset. Tiket bantuan IT terkait juga otomatis ditandai selesai.");
-        redirect('/simpeg_mini/pegawai.php');
+        redirect('/simpekabjmk/pegawai.php');
     }
 }
 
@@ -60,7 +60,7 @@ generateCsrfToken();
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
         <h1 class="section-title">Reset Password</h1>
-        <a href="/simpeg_mini/pegawai.php" class="btn-ghost" style="background:#ffffff;border:1px solid #eaecf0;box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+        <a href="/simpekabjmk/pegawai.php" class="btn-ghost" style="background:#ffffff;border:1px solid #eaecf0;box-shadow:0 2px 5px rgba(0,0,0,0.02);">
           <span class="material-symbols-outlined">arrow_back</span> Kembali
         </a>
       </div>
@@ -107,7 +107,7 @@ generateCsrfToken();
             <button type="submit" class="btn-warning" style="padding:12px 24px;">
               <span class="material-symbols-outlined" style="font-size:20px;">lock_reset</span> Reset Password
             </button>
-            <a href="/simpeg_mini/pegawai.php" class="btn-ghost" style="padding:12px 24px;background:#ffffff;border:1px solid #eaecf0;">Batal</a>
+            <a href="/simpekabjmk/pegawai.php" class="btn-ghost" style="padding:12px 24px;background:#ffffff;border:1px solid #eaecf0;">Batal</a>
           </div>
         </form>
       </div>

@@ -155,7 +155,7 @@ function setRememberMeToken(int $userId): void
     // 4. Set cookie dengan format: user_id:token_plain
     setcookie('simpeg_remember', $userId . ':' . $tokenPlain, [
         'expires'  => time() + (30 * 24 * 60 * 60), // 30 hari
-        'path'     => '/simpeg_mini/',
+        'path'     => '/simpekabjmk/',
         'secure'   => false,   // true jika HTTPS di production
         'httponly' => true,    // JavaScript tidak bisa baca!
         'samesite' => 'Strict',
@@ -170,7 +170,7 @@ function clearRememberMeToken(?int $userId = null): void
     // Hapus cookie
     setcookie('simpeg_remember', '', [
         'expires'  => time() - 3600,
-        'path'     => '/simpeg_mini/',
+        'path'     => '/simpekabjmk/',
         'httponly' => true,
         'samesite' => 'Strict',
     ]);
@@ -280,9 +280,9 @@ function getClientIp(): string
 /**
  * Output string yang sudah di-escape (cegah XSS)
  */
-function e(string $string): string
+function e(?string $string): string
 {
-    return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars((string) $string, ENT_QUOTES, 'UTF-8');
 }
 
 /**
@@ -338,11 +338,13 @@ function getInisial(string $nama): string
 function roleBadge(string $role): string
 {
     $map = [
-        'admin'    => ['label'=>'Admin',    'class'=>'badge-admin',    'icon'=>'local_police'],
-        'manager'  => ['label'=>'Manager',  'class'=>'badge-manager',  'icon'=>'manage_accounts'],
-        'karyawan' => ['label'=>'Karyawan', 'class'=>'badge-karyawan', 'icon'=>'badge'],
+        'super_admin'  => ['label'=>'Super Admin',  'class'=>'badge-admin',    'icon'=>'security'],
+        'eksekutif'    => ['label'=>'Eksekutif',    'class'=>'badge-manager',  'icon'=>'leaderboard'],
+        'admin_bkpsdm' => ['label'=>'Admin BKPSDM', 'class'=>'badge-manager',  'icon'=>'manage_accounts'],
+        'atasan'       => ['label'=>'Atasan',       'class'=>'badge-manager',  'icon'=>'supervisor_account'],
+        'pegawai'      => ['label'=>'Pegawai',      'class'=>'badge-karyawan', 'icon'=>'badge'],
     ];
-    $r = $map[$role] ?? ['label'=>$role, 'class'=>'badge-karyawan', 'icon'=>'person'];
+    $r = $map[$role] ?? ['label'=>ucfirst($role), 'class'=>'badge-karyawan', 'icon'=>'person'];
     return '<span class="badge ' . $r['class'] . '">'
          . '<span class="material-symbols-outlined" style="font-size:12px;">' . $r['icon'] . '</span> '
          . $r['label'] . '</span>';
@@ -359,6 +361,7 @@ function absensiBadge(string $status): string
         'alpha'     => '<span class="badge badge-danger">Alpha</span>',
         'izin'      => '<span class="badge badge-info">Izin</span>',
         'sakit'     => '<span class="badge badge-secondary">Sakit</span>',
+        'menunggu_konfirmasi' => '<span class="badge badge-warning" style="background:#fffbeb;color:#d97706;border:1px solid #fcd34d;"><span class="material-symbols-outlined" style="font-size:14px;">schedule</span> Menunggu Konfirmasi Admin</span>',
     ];
     return $map[$status] ?? '<span class="badge">' . e($status) . '</span>';
 }

@@ -8,7 +8,7 @@ require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/helpers/auth_guard.php';
 require_once __DIR__ . '/helpers/functions.php';
 
-requireRole(['admin']); // Admin Only!
+requireRole(['super_admin', 'admin_bkpsdm']); // Admin Only!
 
 $currentPage = 'permintaan_reset';
 $pageTitle   = 'Permintaan Reset';
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$requestId]);
         setFlash('success', 'Permintaan berhasil dihapus.');
     }
-    redirect('/simpeg_mini/permintaan_reset.php');
+    redirect('/simpekabjmk/permintaan_reset.php');
 }
 
 // Ambil daftar permintaan (join dengan tabel users untuk mengecek apakah email terdaftar)
@@ -115,7 +115,7 @@ $csrfToken = generateCsrfToken();
                 <td>
                   <div style="display:flex;gap:8px;">
                     <?php if ($isPending && $req['user_id']): ?>
-                    <a href="/simpeg_mini/reset_password.php?id=<?= $req['user_id'] ?>" class="btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none;">
+                    <a href="/simpekabjmk/reset_password.php?id=<?= $req['user_id'] ?>" class="btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none;">
                       Proses
                     </a>
                     <?php endif; ?>

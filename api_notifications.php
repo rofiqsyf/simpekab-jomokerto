@@ -31,7 +31,7 @@ if ($role === 'admin') {
             'title' => 'Tiket Baru: ' . e($r['jenis_layanan']),
             'message' => 'Dari: ' . e($r['email']),
             'time' => date('H:i', strtotime($r['created_at'])),
-            'link' => '/simpeg_mini/permintaan_reset.php',
+            'link' => '/simpekabjmk/permintaan_reset.php',
             'icon' => 'support_agent',
             'color' => '#f59e0b',
             'bg' => '#fffbeb'
@@ -48,7 +48,7 @@ if ($role === 'admin') {
             'title' => 'Security: ' . e($l['action']),
             'message' => e($l['description']),
             'time' => date('H:i', strtotime($l['created_at'])),
-            'link' => '/simpeg_mini/log.php',
+            'link' => '/simpekabjmk/log.php',
             'icon' => 'warning',
             'color' => $color,
             'bg' => $bg

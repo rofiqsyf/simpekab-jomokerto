@@ -10,7 +10,7 @@ require_once __DIR__ . '/helpers/functions.php';
 
 // Jika sudah login, redirect ke dashboard
 if (isset($_SESSION['user_id'])) {
-    header('Location: /simpeg_mini/dashboard.php');
+    header('Location: /simpekabjmk/dashboard.php');
     exit;
 }
 
@@ -65,7 +65,7 @@ $csrfToken = generateCsrfToken();
     <!-- Brand Header -->
     <div style="text-align:center;margin-bottom:32px;">
       <div style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;margin-bottom:16px;">
-        <img src="/simpeg_mini/assets/logo_jomokerto.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.05));" />
+        <img src="/simpekabjmk/assets/logo_jomokerto.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.05));" />
       </div>
       <h1 class="section-title" style="font-size:32px;margin-bottom:8px;">Lupa Sandi</h1>
       <p style="color:#64748b;font-weight:500;font-size:14px;letter-spacing:0.02em;">Minta akses ulang ke akun Anda</p>
@@ -80,7 +80,7 @@ $csrfToken = generateCsrfToken();
         <div><?= e($successMessage) ?></div>
       </div>
       <div style="text-align:center;">
-        <a href="/simpeg_mini/login.php" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;text-decoration:none;">
+        <a href="/simpekabjmk/login.php" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;text-decoration:none;">
           <span class="material-symbols-outlined" style="font-size:20px;">arrow_back</span>
           Kembali ke Login
         </a>
@@ -99,7 +99,7 @@ $csrfToken = generateCsrfToken();
       </div>
       <?php endif; ?>
 
-      <form method="POST" action="/simpeg_mini/lupa_password.php" novalidate>
+      <form method="POST" action="/simpekabjmk/lupa_password.php" novalidate>
         <?= csrfInput() ?>
 
         <div style="margin-bottom:20px;">
@@ -130,7 +130,7 @@ $csrfToken = generateCsrfToken();
         </button>
 
         <div style="text-align:center;">
-          <a href="/simpeg_mini/login.php" style="color:#64748b;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+          <a href="/simpekabjmk/login.php" style="color:#64748b;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
             <span class="material-symbols-outlined" style="font-size:16px;">arrow_back</span>
             Kembali ke Login
           </a>

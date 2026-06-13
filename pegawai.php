@@ -9,7 +9,7 @@ require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/helpers/auth_guard.php';
 require_once __DIR__ . '/helpers/functions.php';
 
-requireRole(['admin']); // Admin Only!
+requireRole(['super_admin', 'admin_bkpsdm']); // Admin Only!
 
 $currentPage = 'pegawai';
 $pageTitle   = 'Data Pegawai';
@@ -44,7 +44,7 @@ $whereStr = implode(' AND ', $where);
 $stmtPegawai = $pdo->prepare("
     SELECT u.id, u.nama, u.email, u.role, u.last_login,
            u.login_attempts, u.locked_until,
-           p.nip, p.divisi, p.posisi, p.tgl_masuk, p.status, p.no_telp
+           p.nip, p.divisi, p.posisi, p.golongan, p.pendidikan, p.jenis_asn, p.tgl_masuk, p.status, p.no_telp
     FROM users u
     LEFT JOIN pegawai p ON p.user_id = u.id
     WHERE {$whereStr}
@@ -78,7 +78,7 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
           <h1 class="section-title">Data Pegawai</h1>
           <p class="section-subtitle">CRUD pegawai, manajemen akun & reset password</p>
         </div>
-        <a href="/simpeg_mini/pegawai_tambah.php" class="btn-primary" style="padding:10px 20px;">
+        <a href="/simpekabjmk/pegawai_tambah.php" class="btn-primary" style="padding:10px 20px;">
           <span class="material-symbols-outlined" style="font-size:20px;">person_add</span>
           Tambah Pegawai
         </a>
@@ -86,7 +86,7 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
 
       <!-- Role summary cards -->
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:24px;">
-        <?php foreach ([['admin','Admin','#ef4444','#fef2f2'],['manager','Manager','#f59e0b','#fffbeb'],['karyawan','Karyawan','#0ea5e9','#f0f9ff']] as [$r,$label,$c,$bg]): ?>
+        <?php foreach ([['super_admin','Super Admin','#ef4444','#fef2f2'],['eksekutif','Eksekutif','#db2777','#fce7f3'],['admin_bkpsdm','Admin BKPSDM','#4f46e5','#e0e7ff'],['atasan','Atasan','#f59e0b','#fffbeb'],['pegawai','Pegawai','#0ea5e9','#f0f9ff']] as [$r,$label,$c,$bg]): ?>
         <div class="card" style="padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer;border:1px solid <?= $filterRole===$r?$c:'#eaecf0' ?>;transition:all 0.2s;" onclick="window.location='?role=<?= $r ?>'">
           <div style="width:48px;height:48px;border-radius:12px;background:<?= $bg ?>;display:flex;align-items:center;justify-content:center;color:<?= $c ?>;flex-shrink:0;">
             <span class="material-symbols-outlined" style="font-size:24px;">badge</span>
@@ -109,9 +109,11 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
           </div>
           <select name="role" class="input-card" style="min-width:140px;width:auto;">
             <option value="">Semua Role</option>
-            <option value="admin" <?= $filterRole==='admin'?'selected':'' ?>>Admin</option>
-            <option value="manager" <?= $filterRole==='manager'?'selected':'' ?>>Manager</option>
-            <option value="karyawan" <?= $filterRole==='karyawan'?'selected':'' ?>>Karyawan</option>
+            <option value="super_admin" <?= $filterRole==='super_admin'?'selected':'' ?>>Super Admin</option>
+            <option value="eksekutif" <?= $filterRole==='eksekutif'?'selected':'' ?>>Eksekutif</option>
+            <option value="admin_bkpsdm" <?= $filterRole==='admin_bkpsdm'?'selected':'' ?>>Admin BKPSDM</option>
+            <option value="atasan" <?= $filterRole==='atasan'?'selected':'' ?>>Atasan</option>
+            <option value="pegawai" <?= $filterRole==='pegawai'?'selected':'' ?>>Pegawai</option>
           </select>
           <select name="divisi" class="input-card" style="min-width:160px;width:auto;">
             <option value="">Semua Divisi</option>
@@ -124,7 +126,7 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
             Filter
           </button>
           <?php if ($search || $filterRole || $filterDiv): ?>
-          <a href="/simpeg_mini/pegawai.php" class="btn-ghost" style="padding:10px 16px;">
+          <a href="/simpekabjmk/pegawai.php" class="btn-ghost" style="padding:10px 16px;">
             <span class="material-symbols-outlined" style="font-size:18px;">close</span>
             Reset
           </a>
@@ -146,7 +148,7 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
               <tr>
                 <th>Pegawai</th>
                 <th>NIP</th>
-                <th>Role</th>
+                <th>ASN / Status</th>
                 <th>Divisi & Posisi</th>
                 <th>Status Akun</th>
                 <th>Login Terakhir</th>
@@ -171,7 +173,11 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
                   </div>
                 </td>
                 <td style="color:#64748b;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;"><?= e($p['nip'] ?? '—') ?></td>
-                <td><?= roleBadge($p['role']) ?></td>
+                <td>
+                  <div style="font-weight:600;font-size:13px;color:#1a1d1f;"><?= e($p['jenis_asn'] ?? 'PNS') ?></div>
+                  <div style="color:#64748b;font-size:12px;"><?= e($p['golongan'] ?? '—') ?></div>
+                  <div style="margin-top:4px;"><?= roleBadge($p['role']) ?></div>
+                </td>
                 <td>
                   <div style="color:#1a1d1f;font-weight:600;font-size:14px;"><?= e($p['divisi'] ?? '—') ?></div>
                   <div style="color:#64748b;font-size:13px;"><?= e($p['posisi'] ?? '') ?></div>
@@ -195,15 +201,15 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
                 </td>
                 <td style="text-align:right;">
                   <div style="display:flex;gap:8px;justify-content:flex-end;">
-                    <a href="/simpeg_mini/pegawai_edit.php?id=<?= $p['id'] ?>" class="btn-ghost" style="padding:8px;border:1px solid #e2e8f0;background:#ffffff;" title="Edit">
+                    <a href="/simpekabjmk/pegawai_edit.php?id=<?= $p['id'] ?>" class="btn-ghost" style="padding:8px;border:1px solid #e2e8f0;background:#ffffff;" title="Edit">
                       <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                     </a>
-                    <a href="/simpeg_mini/reset_password.php?id=<?= $p['id'] ?>" class="btn-warning" style="padding:8px;" title="Reset Password"
+                    <a href="/simpekabjmk/reset_password.php?id=<?= $p['id'] ?>" class="btn-warning" style="padding:8px;" title="Reset Password"
                        onclick="return confirm('Reset password <?= e(addslashes(explode(',', $p['nama'])[0])) ?>?')">
                       <span class="material-symbols-outlined" style="font-size:18px;">lock_reset</span>
                     </a>
                     <?php if ($p['id'] != $user['id']): ?>
-                    <a href="/simpeg_mini/pegawai_hapus.php?id=<?= $p['id'] ?>" class="btn-danger" style="padding:8px;" title="Hapus"
+                    <a href="/simpekabjmk/pegawai_hapus.php?id=<?= $p['id'] ?>" class="btn-danger" style="padding:8px;" title="Hapus"
                        onclick="return confirm('HAPUS permanen pegawai <?= e(addslashes(explode(',', $p['nama'])[0])) ?>? Tidak bisa dibatalkan!')">
                       <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
                     </a>

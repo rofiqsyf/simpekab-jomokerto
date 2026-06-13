@@ -6,7 +6,7 @@ require_once __DIR__ . '/helpers/functions.php';
 
 // Redirect entry point
 if (isLoggedIn()) {
-    redirect('/simpeg_mini/dashboard.php');
+    redirect('/simpekabjmk/dashboard.php');
 } else {
-    redirect('/simpeg_mini/login.php');
+    redirect('/simpekabjmk/login.php');
 }

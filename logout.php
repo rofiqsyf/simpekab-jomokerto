@@ -46,5 +46,5 @@ if (ini_get('session.use_cookies')) {
 session_destroy();
 
 // 4. Redirect ke halaman login
-header('Location: /simpeg_mini/login.php');
+header('Location: /simpekabjmk/login.php');
 exit;

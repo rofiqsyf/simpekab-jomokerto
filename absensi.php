@@ -25,6 +25,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validateCsrfToken();
 
     $action = $_POST['action'] ?? '';
+    $is_luar_radius = $_POST['is_luar_radius'] ?? '0';
+    $keterangan_post = trim($_POST['keterangan'] ?? '');
+    
+    // Fungsi internal untuk handle upload foto
+    $handleUpload = function() {
+        if (!isset($_FILES['bukti_foto']) || $_FILES['bukti_foto']['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+        $uploadDir = __DIR__ . '/uploads/absensi/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        $filename = time() . '_' . basename($_FILES['bukti_foto']['name']);
+        $targetFile = $uploadDir . $filename;
+        if (move_uploaded_file($_FILES['bukti_foto']['tmp_name'], $targetFile)) {
+            return 'uploads/absensi/' . $filename;
+        }
+        return null;
+    };
 
     if ($action === 'checkin') {
         // Cek sudah check-in hari ini?
@@ -34,26 +53,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmt->fetch()) {
             setFlash('warning', 'Anda sudah melakukan check-in hari ini.');
         } else {
-            // Tentukan status: terlambat jika > 08:00
+            // Tentukan status default
             $jamMasuk = '08:00:00';
             $status   = ($nowTime > $jamMasuk) ? 'terlambat' : 'hadir';
+            $keterangan = $status === 'terlambat' ? 'Terlambat dari jam 08:00' : 'Tepat waktu';
+            $bukti_foto = null;
+
+            if ($is_luar_radius === '1') {
+                $status = 'menunggu_konfirmasi';
+                $keterangan = $keterangan_post ?: 'Luar radius tanpa keterangan';
+                $bukti_foto = $handleUpload();
+            }
 
             $stmt = $pdo->prepare("
-                INSERT INTO absensi (user_id, tanggal, check_in, status, keterangan)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO absensi (user_id, tanggal, check_in, status, keterangan, bukti_foto)
+                VALUES (?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $user['id'],
                 $today,
                 date('H:i:s'),
                 $status,
-                $status === 'terlambat' ? 'Terlambat dari jam 08:00' : 'Tepat waktu',
+                $keterangan,
+                $bukti_foto
             ]);
 
             logActivity($user['id'], 'ABSENSI_CHECKIN', "Check-in pukul " . date('H:i') . " — Status: {$status}", 'info');
             setFlash('success', "Check-in berhasil pukul " . date('H:i') . " (Status: " . strtoupper($status) . ")");
         }
-        redirect('/simpeg_mini/absensi.php');
+        $redirectUrl = $_POST['redirect_to'] ?? '/simpekabjmk/absensi.php';
+        redirect($redirectUrl);
     }
 
     if ($action === 'checkout') {
@@ -73,15 +102,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $checkOut  = time();
             $durasiMnt = (int) round(($checkOut - $checkIn) / 60);
 
-            $stmt = $pdo->prepare("
-                UPDATE absensi SET check_out = ?, durasi_mnt = ? WHERE id = ?
-            ");
-            $stmt->execute([date('H:i:s'), $durasiMnt, $record['id']]);
+            $updateFields = "check_out = ?, durasi_mnt = ?";
+            $updateParams = [date('H:i:s'), $durasiMnt];
+
+            if ($is_luar_radius === '1') {
+                $status = 'menunggu_konfirmasi';
+                $keterangan = $keterangan_post ?: 'Check-out luar radius';
+                $bukti_foto = $handleUpload();
+                $updateFields .= ", status = ?, keterangan = ?, bukti_foto = ?";
+                array_push($updateParams, $status, $keterangan, $bukti_foto);
+            }
+
+            $updateParams[] = $record['id'];
+
+            $stmt = $pdo->prepare("UPDATE absensi SET {$updateFields} WHERE id = ?");
+            $stmt->execute($updateParams);
 
             logActivity($user['id'], 'ABSENSI_CHECKOUT', "Check-out pukul " . date('H:i') . " — Durasi: " . formatDurasi($durasiMnt), 'info');
             setFlash('success', "Check-out berhasil pukul " . date('H:i') . " — Durasi kerja: " . formatDurasi($durasiMnt));
         }
-        redirect('/simpeg_mini/absensi.php');
+        $redirectUrl = $_POST['redirect_to'] ?? '/simpekabjmk/absensi.php';
+        redirect($redirectUrl);
     }
 }
 
@@ -150,67 +191,8 @@ $csrfToken = generateCsrfToken();
 
       <div style="display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-bottom:32px;">
 
-        <!-- CHECK-IN CARD -->
-        <div class="card card-dark" style="position:relative;overflow:hidden;">
-          <div style="position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,184,0,0.15),transparent 70%);"></div>
-          <h2 style="font-size:18px;font-weight:700;color:#ffffff;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
-            <span class="material-symbols-outlined" style="color:#ffb800;background:rgba(255,184,0,0.1);padding:8px;border-radius:12px;">fingerprint</span>
-            Sistem Kehadiran
-          </h2>
-
-          <!-- Status card -->
-          <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:24px;text-align:center;margin-bottom:20px;backdrop-filter:blur(10px);">
-            <?php if ($sudahCheckOut): ?>
-              <div style="font-size:48px;margin-bottom:12px;">🏠</div>
-              <div style="font-size:18px;font-weight:700;color:#ffffff;margin-bottom:8px;">Selesai Kerja</div>
-              <div style="color:#9a9fa5;font-size:14px;font-weight:500;">
-                Masuk: <?= e($absensiToday['check_in']) ?> &nbsp;|&nbsp; Keluar: <?= e($absensiToday['check_out']) ?>
-                <div style="margin-top:6px;color:#ffb800;font-weight:600;">Durasi: <?= formatDurasi($absensiToday['durasi_mnt']) ?></div>
-              </div>
-            <?php elseif ($sudahCheckIn): ?>
-              <div style="font-size:48px;margin-bottom:12px;">✅</div>
-              <div style="font-size:18px;font-weight:700;color:#10b981;margin-bottom:8px;">Sudah Check-In</div>
-              <div style="color:#9a9fa5;font-size:14px;font-weight:500;">
-                Pukul <?= e($absensiToday['check_in']) ?> — <?= absensiBadge($absensiToday['status']) ?>
-              </div>
-            <?php else: ?>
-              <div style="font-size:48px;margin-bottom:12px;">⏱️</div>
-              <div style="font-size:18px;font-weight:700;color:#ffb800;margin-bottom:8px;">Belum Check-In</div>
-              <div style="color:#9a9fa5;font-size:14px;font-weight:500;line-height:1.6;">
-                Waktu sekarang: <strong style="color:#ffffff;"><?= date('H:i:s') ?></strong><br>
-                Jam masuk: 08:00 (Toleransi 0 menit)
-              </div>
-            <?php endif; ?>
-          </div>
-
-          <!-- Action buttons -->
-          <?php if (!$sudahCheckIn): ?>
-          <form method="POST">
-            <?= csrfInput() ?>
-            <input type="hidden" name="action" value="checkin">
-            <button type="submit" class="btn-primary" style="width:100%;font-size:16px;padding:16px;box-shadow:0 8px 24px rgba(255,184,0,0.25);" onclick="return confirm('Konfirmasi check-in pukul <?= date('H:i') ?>?')">
-              <span class="material-symbols-outlined">login</span>
-              Check In Sekarang
-            </button>
-          </form>
-
-          <?php elseif ($sudahCheckIn && !$sudahCheckOut): ?>
-          <form method="POST">
-            <?= csrfInput() ?>
-            <input type="hidden" name="action" value="checkout">
-            <button type="submit" style="width:100%;font-size:16px;padding:16px;background:#ffffff;color:#1a1d1f;border:none;border-radius:999px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 24px rgba(255,255,255,0.15);" onclick="return confirm('Konfirmasi check-out pukul <?= date('H:i') ?>?')">
-              <span class="material-symbols-outlined">logout</span>
-              Check Out Sekarang
-            </button>
-          </form>
-
-          <?php else: ?>
-          <button style="width:100%;font-size:16px;padding:16px;background:rgba(255,255,255,0.1);color:#ffffff;border:none;border-radius:999px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;opacity:0.6;cursor:not-allowed;" disabled>
-            <span class="material-symbols-outlined">done_all</span>
-            Absensi Selesai Hari Ini
-          </button>
-          <?php endif; ?>
-        </div>
+        <!-- CHECK-IN CARD WIDGET -->
+        <?php include __DIR__ . '/partials/widget_absensi.php'; ?>
 
         <!-- STATISTIK BULAN INI -->
         <div class="card">
@@ -252,9 +234,14 @@ $csrfToken = generateCsrfToken();
 
       <!-- RIWAYAT ABSENSI TABLE -->
       <div class="card" style="padding:0;overflow:hidden;border:1px solid #eaecf0;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
-        <div style="padding:20px 24px;border-bottom:1px solid #eaecf0;display:flex;justify-content:space-between;align-items:center;background:#ffffff;">
+        <div style="padding:20px 24px;border-bottom:1px solid #eaecf0;display:flex;justify-content:space-between;align-items:center;background:#ffffff;flex-wrap:wrap;gap:16px;">
           <h2 style="font-size:18px;font-weight:700;color:#1a1d1f;">Riwayat Absensi — <?= date('F Y') ?></h2>
-          <span class="badge badge-secondary" style="font-size:13px;"><?= count($riwayat) ?> entri</span>
+          <div style="display:flex;gap:12px;align-items:center;">
+            <span class="badge badge-secondary" style="font-size:13px;"><?= count($riwayat) ?> entri</span>
+            <button class="btn-ghost" style="border:1px solid #eaecf0;background:#ffffff;font-size:13px;padding:8px 16px;" onclick="alert('Formulir pengajuan koreksi (Lupa Absen / Tugas Luar) sedang dikembangkan.')">
+              <span class="material-symbols-outlined" style="font-size:16px;">edit_calendar</span> Ajukan Koreksi
+            </button>
+          </div>
         </div>
         <div style="overflow-x:auto;">
           <table class="data-table">

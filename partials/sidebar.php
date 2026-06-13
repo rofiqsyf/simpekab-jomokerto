@@ -5,8 +5,8 @@ $user = currentUser();
 $role = $user['role'] ?? '';
 $nama = $user['nama'] ?? '';
 $initials = getInisial($nama);
-$avatarColors = ['admin'=>'#fee2e2','manager'=>'#fef3c7','karyawan'=>'#e0f2fe'];
-$avatarTextColors = ['admin'=>'#ef4444','manager'=>'#f59e0b','karyawan'=>'#0ea5e9'];
+$avatarColors = ['super_admin'=>'#fee2e2','eksekutif'=>'#fce7f3','admin_bkpsdm'=>'#e0e7ff','atasan'=>'#fef3c7','pegawai'=>'#e0f2fe'];
+$avatarTextColors = ['super_admin'=>'#ef4444','eksekutif'=>'#db2777','admin_bkpsdm'=>'#4f46e5','atasan'=>'#f59e0b','pegawai'=>'#0ea5e9'];
 $bg  = $avatarColors[$role]  ?? '#e0f2fe';
 $fg  = $avatarTextColors[$role] ?? '#0ea5e9';
 ?>
@@ -16,7 +16,7 @@ $fg  = $avatarTextColors[$role] ?? '#0ea5e9';
   <div class="p-6" style="border-bottom:1px solid #eaecf0;">
     <div class="flex items-center gap-3">
       <div class="w-12 h-12 flex items-center justify-center">
-        <img src="/simpeg_mini/assets/logo_jomokerto.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.05));" />
+        <img src="/simpekabjmk/assets/logo_jomokerto.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.05));" />
       </div>
       <div>
         <div class="font-extrabold tracking-tight" style="color:#1a1d1f;font-size:16px;line-height:1.2;">SIMPEKAB<br>JOMOKERTO</div>
@@ -46,51 +46,81 @@ $fg  = $avatarTextColors[$role] ?? '#0ea5e9';
   <div class="flex-1 py-4">
     <div style="padding:8px 24px 8px;color:#94a3b8;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Menu Utama</div>
 
-    <a href="/simpeg_mini/dashboard.php" class="nav-item <?= $currentPage==='dashboard'?'active':'' ?>">
+    <a href="/simpekabjmk/dashboard.php" class="nav-item <?= $currentPage==='dashboard'?'active':'' ?>">
       <span class="material-symbols-outlined">grid_view</span>
       Beranda
     </a>
-    <a href="/simpeg_mini/profil.php" class="nav-item <?= $currentPage==='profil'?'active':'' ?>">
+    <a href="/simpekabjmk/profil.php" class="nav-item <?= $currentPage==='profil'?'active':'' ?>">
       <span class="material-symbols-outlined">person</span>
       Profil Saya
     </a>
-    <a href="/simpeg_mini/absensi.php" class="nav-item <?= $currentPage==='absensi'?'active':'' ?>">
+    <a href="/simpekabjmk/absensi.php" class="nav-item <?= $currentPage==='absensi'?'active':'' ?>">
       <span class="material-symbols-outlined">how_to_reg</span>
       Absensi Saya
     </a>
 
-    <?php if (hasAnyRole(['admin','manager'])): ?>
+    <div style="padding:16px 24px 8px;color:#94a3b8;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Layanan ASN</div>
+    <a href="/simpekabjmk/kinerja_skp.php" class="nav-item <?= $currentPage==='kinerja'?'active':'' ?>">
+      <span class="material-symbols-outlined">assignment</span>
+      E-Kinerja (SKP)
+    </a>
+    <a href="/simpekabjmk/layanan_pengajuan.php" class="nav-item <?= $currentPage==='layanan_pengajuan'?'active':'' ?>">
+      <span class="material-symbols-outlined">folder_managed</span>
+      Pengajuan Layanan
+    </a>
+
+    <?php if (hasAnyRole(['super_admin','admin_bkpsdm','atasan'])): ?>
     <div style="padding:16px 24px 8px;color:#94a3b8;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Manajemen Tim</div>
-    <a href="/simpeg_mini/absensi_tim.php" class="nav-item <?= $currentPage==='absensi_tim'?'active':'' ?>">
+    <a href="/simpekabjmk/absensi_tim.php" class="nav-item <?= $currentPage==='absensi_tim'?'active':'' ?>">
       <span class="material-symbols-outlined">groups</span>
       Absensi Tim
     </a>
+    <?php if (hasAnyRole(['super_admin','atasan'])): ?>
+    <a href="/simpekabjmk/kinerja_evaluasi.php" class="nav-item <?= $currentPage==='kinerja_evaluasi'?'active':'' ?>">
+      <span class="material-symbols-outlined">fact_check</span>
+      Evaluasi Kinerja
+    </a>
+    <a href="/simpekabjmk/layanan_approval.php" class="nav-item <?= $currentPage==='layanan_approval'?'active':'' ?>">
+      <span class="material-symbols-outlined">verified_user</span>
+      Approval Layanan
+    </a>
+    <?php endif; ?>
+    <?php if (hasAnyRole(['super_admin','admin_bkpsdm'])): ?>
+    <a href="/simpekabjmk/layanan_verifikasi.php" class="nav-item <?= $currentPage==='layanan_verifikasi'?'active':'' ?>">
+      <span class="material-symbols-outlined">domain_verification</span>
+      Verifikasi BKPSDM
+    </a>
+    <?php endif; ?>
     <?php endif; ?>
 
-    <?php if (hasRole('admin')): ?>
+    <?php if (hasRole('super_admin') || hasRole('admin_bkpsdm')): ?>
     <div style="padding:16px 24px 8px;color:#94a3b8;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Administrasi</div>
-    <a href="/simpeg_mini/pegawai.php" class="nav-item <?= $currentPage==='pegawai'?'active':'' ?>">
+    <a href="/simpekabjmk/pegawai.php" class="nav-item <?= $currentPage==='pegawai'?'active':'' ?>">
       <span class="material-symbols-outlined">badge</span>
       Data Pegawai
     </a>
-    <a href="/simpeg_mini/permintaan_reset.php" class="nav-item <?= $currentPage==='permintaan_reset'?'active':'' ?>">
+    <a href="/simpekabjmk/permintaan_reset.php" class="nav-item <?= $currentPage==='permintaan_reset'?'active':'' ?>">
       <span class="material-symbols-outlined">support_agent</span>
       Bantuan IT
     </a>
-    <a href="/simpeg_mini/keamanan.php" class="nav-item <?= $currentPage==='keamanan'?'active':'' ?>">
+    <a href="/simpekabjmk/keamanan.php" class="nav-item <?= $currentPage==='keamanan'?'active':'' ?>">
       <span class="material-symbols-outlined">shield</span>
       Brankas Keamanan
     </a>
-    <a href="/simpeg_mini/log.php" class="nav-item <?= $currentPage==='log'?'active':'' ?>">
+    <a href="/simpekabjmk/log.php" class="nav-item <?= $currentPage==='log'?'active':'' ?>">
       <span class="material-symbols-outlined">monitoring</span>
       Log Aktivitas
+    </a>
+    <a href="/simpekabjmk/absensi_approval.php" class="nav-item <?= $currentPage==='absensi_approval'?'active':'' ?>">
+      <span class="material-symbols-outlined">rule</span>
+      Approval Absensi
     </a>
     <?php endif; ?>
   </div>
 
   <!-- Footer -->
   <div class="p-4" style="border-top:1px solid #eaecf0;background:#f8fafc;">
-    <a href="/simpeg_mini/logout.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 font-semibold text-sm transition-colors hover:bg-red-50" onclick="return confirm('Yakin ingin keluar dari sesi aman ini?')">
+    <a href="/simpekabjmk/logout.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 font-semibold text-sm transition-colors hover:bg-red-50" onclick="return confirm('Yakin ingin keluar dari sesi aman ini?')">
       <span class="material-symbols-outlined">logout</span>
       Keluar
     </a>

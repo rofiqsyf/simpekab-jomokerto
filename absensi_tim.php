@@ -9,7 +9,7 @@ require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/helpers/auth_guard.php';
 require_once __DIR__ . '/helpers/functions.php';
 
-requireRole(['admin', 'manager']); // RBAC Guard!
+requireRole(['super_admin', 'admin_bkpsdm', 'atasan']); // RBAC Guard!
 
 $currentPage = 'absensi_tim';
 $pageTitle   = 'Absensi Tim';
@@ -27,7 +27,7 @@ $tahun = max(2020, min(2030, $tahun));
 // - Admin: semua divisi (bisa filter per divisi)
 // - Manager: hanya divisinya sendiri
 // ============================================================
-if (hasRole('admin')) {
+if (hasRole('super_admin') || hasRole('admin_bkpsdm')) {
     $filterDivisi = $_GET['divisi'] ?? '';
     // Ambil semua divisi yang tersedia
     $stmtDivisi = $pdo->query("SELECT DISTINCT divisi FROM pegawai ORDER BY divisi");
@@ -97,13 +97,13 @@ $namaBulan = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agust
         <div>
           <h1 class="section-title">Absensi Tim</h1>
           <p class="section-subtitle">
-            Rekap kehadiran <?= hasRole('admin') ? 'seluruh' : '' ?> anggota
+            Rekap kehadiran <?= (hasRole('super_admin') || hasRole('admin_bkpsdm')) ? 'seluruh' : '' ?> anggota
             <?= $filterDivisi ? '— <strong style="color:#1a1d1f;">' . e($filterDivisi) . '</strong>' : '' ?>
           </p>
         </div>
         <!-- Filter -->
         <form method="GET" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-          <?php if (hasRole('admin')): ?>
+          <?php if (hasRole('super_admin') || hasRole('admin_bkpsdm')): ?>
           <select name="divisi" class="input-card" style="max-width:200px;width:auto;" onchange="this.form.submit()">
             <option value="">Semua Divisi</option>
             <?php foreach ($daftarDivisi as $div): ?>

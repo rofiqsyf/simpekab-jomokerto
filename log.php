@@ -9,7 +9,7 @@ require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/helpers/auth_guard.php';
 require_once __DIR__ . '/helpers/functions.php';
 
-requireRole(['admin']);
+requireRole(['super_admin']);
 
 $currentPage = 'log';
 $pageTitle   = 'Log Aktivitas';
@@ -121,7 +121,7 @@ foreach ($stmtLevelStats->fetchAll() as $s) { $levelStats[$s['level']] = $s['c']
             Filter
           </button>
           <?php if ($filterLevel || $filterUser): ?>
-          <a href="/simpeg_mini/log.php" class="btn-ghost" style="padding:10px 16px;">
+          <a href="/simpekabjmk/log.php" class="btn-ghost" style="padding:10px 16px;">
             <span class="material-symbols-outlined" style="font-size:18px;">close</span>
             Reset
           </a>
@@ -129,29 +129,27 @@ foreach ($stmtLevelStats->fetchAll() as $s) { $levelStats[$s['level']] = $s['c']
         </form>
       </div>
 
-      <!-- Terminal-style log viewer -->
-      <div class="card" style="padding:0;overflow:hidden;margin-bottom:24px;border:1px solid #334155;background:#1e293b;box-shadow:0 10px 25px rgba(0,0,0,0.1);">
-        <div style="background:#0f172a;padding:12px 20px;border-bottom:1px solid #334155;display:flex;align-items:center;gap:8px;">
-          <div style="width:12px;height:12px;border-radius:50%;background:#ef4444;"></div>
-          <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b;"></div>
-          <div style="width:12px;height:12px;border-radius:50%;background:#10b981;"></div>
-          <span style="color:#94a3b8;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;margin-left:8px;">simpeg_audit.log — <?= date('Y-m-d') ?></span>
+      <!-- Terminal-style log viewer (Light Theme) -->
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:24px;border:1px solid #eaecf0;background:#ffffff;box-shadow:0 10px 25px rgba(0,0,0,0.02);">
+        <div style="background:#f8fafc;padding:12px 20px;border-bottom:1px solid #eaecf0;display:flex;align-items:center;gap:8px;">
+          <span class="material-symbols-outlined" style="color:#3b82f6;font-size:18px;">terminal</span>
+          <span style="color:#0f172a;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;">simpeg_audit.log — <?= date('Y-m-d') ?></span>
           <span class="dot-green animate-ping-slow" style="margin-left:auto;"></span>
         </div>
         <div style="padding:20px;height:240px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;">
           <?php if (empty($logs)): ?>
-          <span style="color:#64748b;">-- No log entries --</span>
+          <span style="color:#94a3b8;">-- No log entries --</span>
           <?php else: ?>
           <?php foreach (array_slice($logs, 0, 15) as $log):
-            $color = ['info'=>'#38bdf8','warning'=>'#fbbf24','critical'=>'#f87171'][$log['level']] ?? '#38bdf8';
+            $color = ['info'=>'#10b981','warning'=>'#f59e0b','critical'=>'#ef4444'][$log['level']] ?? '#64748b';
           ?>
-          <div style="margin-bottom:6px;">
-            <span style="color:#64748b;">[<?= e(date('H:i:s', strtotime($log['created_at']))) ?>]</span>
-            <span style="color:<?= $color ?>;font-weight:700;">[<?= strtoupper(e($log['level'])) ?>]</span>
-            <span style="color:#94a3b8;"> <?= e($log['email'] ?? ($log['ip_address'] ?? 'SYSTEM')) ?></span>
-            <span style="color:#f8fafc;"> — <?= e($log['aksi']) ?></span>
+          <div style="display:flex;gap:12px;align-items:start;margin-bottom:6px;">
+            <span style="color:#94a3b8;">[<?= e(date('H:i:s', strtotime($log['created_at']))) ?>]</span>
+            <span style="color:<?= $color ?>;font-weight:700;width:70px;">[<?= strtoupper(e($log['level'])) ?>]</span>
+            <span style="color:#64748b;white-space:nowrap;"> <?= e($log['email'] ?? ($log['ip_address'] ?? 'SYSTEM')) ?></span>
+            <span style="color:#1e293b;font-weight:500;"> — <?= e($log['aksi']) ?></span>
             <?php if ($log['ip_address']): ?>
-            <span style="color:#64748b;"> (<?= e($log['ip_address']) ?>)</span>
+            <span style="color:#94a3b8;"> (<?= e($log['ip_address']) ?>)</span>
             <?php endif; ?>
           </div>
           <?php endforeach; ?>

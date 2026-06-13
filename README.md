@@ -21,12 +21,12 @@
 
 **Laragon:**
 ```
-C:\laragon\www\simpeg_mini\
+C:\laragon\www\simpekabjmk\
 ```
 
 **XAMPP:**
 ```
-C:\xampp\htdocs\simpeg_mini\
+C:\xampp\htdocs\simpekabjmk\
 ```
 
 ### Langkah 2 — Import Database
@@ -45,14 +45,14 @@ mysql -u root -p < simpeg.sql
 Edit `config/database.php`:
 ```php
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'simpeg_db');
+define('DB_NAME', 'simpekabjmk');
 define('DB_USER', 'root');
 define('DB_PASS', '');       // Kosong untuk Laragon/XAMPP default
 ```
 
 ### Langkah 4 — Generate Hash Password (Bcrypt)
 
-Buka browser → `http://localhost/simpeg_mini/seed_users.php`
+Buka browser → `http://localhost/simpekabjmk/seed_users.php`
 
 Script ini akan generate hash Bcrypt untuk semua akun demo.
 
@@ -61,7 +61,7 @@ Script ini akan generate hash Bcrypt untuk semua akun demo.
 ### Langkah 5 — Akses Aplikasi
 
 ```
-http://localhost/simpeg_mini/
+http://localhost/simpekabjmk/
 ```
 
 ---
@@ -70,17 +70,18 @@ http://localhost/simpeg_mini/
 
 | Role | Email | Password |
 |------|-------|----------|
-| **Admin (HRD)** | `admin@simpeg.test` | `admin123` |
-| **Manager IT** | `manager.it@simpeg.test` | `manager123` |
-| **Manager Finance** | `manager.fin@simpeg.test` | `manager123` |
-| **Karyawan** | `dedi@simpeg.test` | `karyawan123` |
+| **Super Admin** | `admin@simpeg.test` | `admin123` |
+| **Eksekutif** | `bupati@simpeg.test` | `admin123` |
+| **Admin BKPSDM** | `bkpsdm@simpeg.test` | `admin123` |
+| **Atasan** | `kadis.kominfo@simpeg.test` | `admin123` |
+| **Pegawai** | `dedi@simpeg.test` | `admin123` |
 
 ---
 
 ## 🗂️ Struktur File
 
 ```
-simpeg_mini/
+simpekabjmk/
 ├── config/
 │   ├── database.php          ← Koneksi PDO (wajib dikonfigurasi)
 │   └── session.php           ← Session security hardening
@@ -90,24 +91,33 @@ simpeg_mini/
 ├── partials/
 │   ├── head.php              ← HTML <head> + Jomokerto Obsidian CSS
 │   ├── sidebar.php           ← Navigasi sidebar (role-aware)
-│   ├── topbar.php            ← Top navigation bar
-│   └── footer.php            ← JS helpers + closing tags
+│   ├── topbar.php            ← Top navigation bar (dilengkapi Global Search Autocomplete)
+│   ├── footer.php            ← JS helpers + closing tags
+│   └── widget_absensi.php    ← Widget Absensi GPS Live dengan validasi luar radius & lampiran foto
 ├── index.php                 ← Entry point → redirect
 ├── login.php                 ← Login + rate limiting + remember me
 ├── logout.php                ← Secure logout (destroy session + cookie)
 ├── dashboard.php             ← Dashboard (semua role, data berbeda)
-├── profil.php                ← Profil + info sesi + ganti password
-├── absensi.php               ← Check-in/out + riwayat (semua role)
-├── absensi_tim.php           ← Rekap tim (manager + admin)
-├── pegawai.php               ← Daftar pegawai + search/filter (admin)
-├── pegawai_tambah.php        ← Tambah pegawai + Bcrypt hash (admin)
-├── pegawai_edit.php          ← Edit data pegawai (admin)
+├── profil.php                ← Profil ASN + Digital Locker
+├── absensi.php               ← Check-in/out GPS + riwayat + koreksi absen + upload foto luar radius
+├── absensi_tim.php           ← Rekap tim (atasan + super_admin + admin_bkpsdm)
+├── absensi_approval.php      ← Approval Absensi Luar Radius (admin_bkpsdm + super_admin)
+├── pegawai.php               ← Daftar ASN + search/filter (admin_bkpsdm)
+├── pegawai_tambah.php        ← Tambah ASN (admin)
+├── pegawai_edit.php          ← Edit data ASN (admin)
 ├── pegawai_hapus.php         ← Hapus pegawai via CASCADE (admin)
-├── reset_password.php        ← Reset + unlock akun (admin)
-├── keamanan.php              ← Brankas: RBAC matrix + threat monitor
-├── log.php                   ← Log aktivitas + pagination (admin)
+├── kinerja_skp.php           ← Input SKP & Realisasi Bulanan (Pegawai)
+├── kinerja_evaluasi.php      ← Evaluasi SKP Bawahan (Atasan)
+├── layanan_pengajuan.php     ← Pengajuan Cuti / Izin (Pegawai)
+├── layanan_approval.php      ← Persetujuan Cuti / Izin (Atasan)
+├── layanan_verifikasi.php    ← Verifikasi Akhir / Terbit SK (Admin BKPSDM)
+├── reset_password.php        ← Reset + unlock akun (super_admin + admin_bkpsdm)
+├── keamanan.php              ← Brankas: RBAC matrix + threat monitor (super_admin)
+├── log.php                   ← Log aktivitas + pagination (super_admin)
 ├── seed_users.php            ← ⚠️ Jalankan sekali, lalu HAPUS!
-├── simpeg.sql                ← SQL schema + seed data
+├── simpeg.sql                ← SQL schema base
+├── migrate.sql               ← SQL migration untuk kolom ASN
+├── migrate2.sql              ← SQL migration untuk SKP
 └── README.md                 ← Dokumentasi ini
 ```
 
@@ -174,10 +184,10 @@ $errors[] = 'Email atau password salah'; // OWASP Best Practice
 ### 6. RBAC Guard (`helpers/auth_guard.php`)
 ```php
 // Hanya admin yang boleh akses
-requireRole(['admin']);
+requireRole(['super_admin']);
 
-// Hanya admin dan manager
-requireRole(['admin', 'manager']);
+// Beberapa role
+requireRole(['super_admin', 'admin_bkpsdm']);
 
 // Semua yang sudah login
 requireLogin();
@@ -217,13 +227,14 @@ $user = $stmt->fetch();
 ### `users` — Akun login + keamanan
 ```sql
 id, nama, email, password (Bcrypt),
-role (admin|manager|karyawan),
+role (super_admin|eksekutif|admin_bkpsdm|atasan|pegawai),
 remember_token, login_attempts, locked_until, last_login
 ```
 
-### `pegawai` — Data kepegawaian
+### `pegawai` — Data ASN / Kepegawaian
 ```sql
-id, user_id (FK→users), nip, divisi, posisi,
+id, user_id (FK→users), nip, nik, npwp, divisi, posisi,
+golongan, pendidikan, jenis_asn (PNS|PPPK|Non-ASN),
 no_telp, tgl_masuk, status (aktif|nonaktif|cuti)
 ```
 
@@ -232,6 +243,19 @@ no_telp, tgl_masuk, status (aktif|nonaktif|cuti)
 id, user_id (FK→users), tanggal, check_in, check_out,
 status (hadir|terlambat|alpha|izin|sakit), keterangan, durasi_mnt
 UNIQUE KEY (user_id, tanggal)
+```
+
+### `kinerja_skp` — Sasaran Kinerja Pegawai (Baru)
+```sql
+id, user_id (FK→users), bulan, kegiatan, target, realisasi,
+capaian, nilai_atasan, periode, nilai, catatan_atasan,
+status (draft|submitted|reviewed)
+```
+
+### `pengajuan_layanan` — Layanan Mandiri (Baru)
+```sql
+id, user_id (FK→users), jenis, tanggal_mulai, tanggal_selesai,
+keterangan, status (pending_atasan|approved_atasan|approved_bkpsdm|rejected)
 ```
 
 ### `activity_log` — Audit trail
@@ -248,7 +272,7 @@ ip_address, user_agent, level (info|warning|critical)
 |-------|-------------|-------|
 | Fungsionalitas login/logout/session | ✅ Lengkap — `config/session.php` + `login.php` + `logout.php` | 20% |
 | Password hashing Bcrypt | ✅ `PASSWORD_BCRYPT cost=12` + auto-rehash + `password_verify` | 15% |
-| RBAC (3 role akses berbeda) | ✅ `requireRole()` guard + menu dinamis + dashboard adaptif | 25% |
+| RBAC (5 role akses berbeda) | ✅ `requireRole()` guard + menu dinamis + dashboard adaptif | 25% |
 | Keamanan (CSRF, session, rate limit) | ✅ Semua 4 aspek terimplementasi penuh | 20% |
 | Remember Me *(bonus)* | ✅ Token rotation + SHA-256 + HttpOnly cookie | +10% |
 | Kode bersih & terstruktur | ✅ Modular (config/helpers/partials), komentar lengkap | 10% |

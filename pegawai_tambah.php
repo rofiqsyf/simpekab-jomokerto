@@ -9,7 +9,7 @@ require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/helpers/auth_guard.php';
 require_once __DIR__ . '/helpers/functions.php';
 
-requireRole(['admin']);
+requireRole(['super_admin', 'admin_bkpsdm']);
 
 $currentPage = 'pegawai';
 $pageTitle   = 'Tambah Pegawai';
@@ -23,10 +23,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $old = [
         'nama'      => trim($_POST['nama']     ?? ''),
         'email'     => trim($_POST['email']    ?? ''),
-        'role'      => $_POST['role']          ?? 'karyawan',
+        'role'      => $_POST['role']          ?? 'pegawai',
         'nip'       => trim($_POST['nip']      ?? ''),
         'divisi'    => trim($_POST['divisi']   ?? ''),
         'posisi'    => trim($_POST['posisi']   ?? ''),
+        'golongan'  => trim($_POST['golongan'] ?? ''),
+        'pendidikan'=> trim($_POST['pendidikan']?? ''),
+        'jenis_asn' => trim($_POST['jenis_asn']?? 'PNS'),
+        'nik'       => trim($_POST['nik']      ?? ''),
+        'npwp'      => trim($_POST['npwp']     ?? ''),
         'no_telp'   => trim($_POST['no_telp']  ?? ''),
         'tgl_masuk' => $_POST['tgl_masuk']     ?? date('Y-m-d'),
         'status'    => $_POST['status']        ?? 'aktif',
@@ -44,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isEmpty($password))        $errors[] = 'Password wajib diisi';
     elseif (strlen($password) < 8) $errors[] = 'Password minimal 8 karakter';
     if ($password !== $password2)  $errors[] = 'Konfirmasi password tidak cocok';
-    if (!in_array($old['role'], ['admin','manager','karyawan'])) $errors[] = 'Role tidak valid';
+    if (!in_array($old['role'], ['super_admin','eksekutif','admin_bkpsdm','atasan','pegawai'])) $errors[] = 'Role tidak valid';
 
     // Cek email unik
     if (empty($errors)) {
@@ -78,14 +83,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Insert ke tabel pegawai
             $stmtPegawai = $pdo->prepare("
-                INSERT INTO pegawai (user_id, nip, divisi, posisi, no_telp, tgl_masuk, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO pegawai (user_id, nip, nik, npwp, divisi, posisi, golongan, pendidikan, jenis_asn, no_telp, tgl_masuk, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmtPegawai->execute([
                 $newUserId,
                 $old['nip'],
+                $old['nik'] ?: null,
+                $old['npwp'] ?: null,
                 $old['divisi'],
                 $old['posisi'],
+                $old['golongan'] ?: null,
+                $old['pendidikan'] ?: null,
+                $old['jenis_asn'],
                 $old['no_telp'] ?: null,
                 $old['tgl_masuk'],
                 $old['status'],
@@ -95,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             logActivity(currentUser()['id'], 'PEGAWAI_TAMBAH', "Menambahkan pegawai: {$old['email']} sebagai {$old['role']}", 'info');
             setFlash('success', "Pegawai {$old['nama']} berhasil ditambahkan! Password di-hash dengan Bcrypt cost=12.");
-            redirect('/simpeg_mini/pegawai.php');
+            redirect('/simpekabjmk/pegawai.php');
 
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -121,7 +131,7 @@ $daftarDivisi = ['IT & Development','HRD & Administrasi','Finance & Akuntansi','
           <h1 class="section-title">Tambah Pegawai</h1>
           <p class="section-subtitle">Password akan di-hash menggunakan Bcrypt cost=12</p>
         </div>
-        <a href="/simpeg_mini/pegawai.php" class="btn-ghost" style="background:#ffffff;border:1px solid #eaecf0;box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+        <a href="/simpekabjmk/pegawai.php" class="btn-ghost" style="background:#ffffff;border:1px solid #eaecf0;box-shadow:0 2px 5px rgba(0,0,0,0.02);">
           <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>
           Kembali
         </a>
@@ -158,14 +168,22 @@ $daftarDivisi = ['IT & Development','HRD & Administrasi','Finance & Akuntansi','
               <input type="text" name="nip" value="<?= e($old['nip'] ?? '') ?>" placeholder="NIP2026013" class="input-card" required/>
             </div>
             <div class="form-group">
+              <label class="label">NIK</label>
+              <input type="text" name="nik" value="<?= e($old['nik'] ?? '') ?>" placeholder="330xxxxxxxxxxxxx" class="input-card"/>
+            </div>
+            <div class="form-group">
+              <label class="label">NPWP</label>
+              <input type="text" name="npwp" value="<?= e($old['npwp'] ?? '') ?>" placeholder="00.000.000.0-000.000" class="input-card"/>
+            </div>
+            <div class="form-group">
               <label class="label">No. Telepon</label>
               <input type="text" name="no_telp" value="<?= e($old['no_telp'] ?? '') ?>" placeholder="08123456789" class="input-card"/>
             </div>
             <div class="form-group">
               <label class="label">Role *</label>
               <select name="role" class="input-card" required>
-                <?php foreach (['karyawan','manager','admin'] as $r): ?>
-                <option value="<?= $r ?>" <?= ($old['role']??'karyawan')===$r?'selected':'' ?>><?= ucfirst($r) ?></option>
+                <?php foreach (['pegawai','atasan','admin_bkpsdm','eksekutif','super_admin'] as $r): ?>
+                <option value="<?= $r ?>" <?= ($old['role']??'pegawai')===$r?'selected':'' ?>><?= ucfirst(str_replace('_', ' ', $r)) ?></option>
                 <?php endforeach; ?>
               </select>
             </div>
@@ -180,10 +198,36 @@ $daftarDivisi = ['IT & Development','HRD & Administrasi','Finance & Akuntansi','
             </div>
             <div class="form-group">
               <label class="label">Posisi/Jabatan *</label>
-              <input type="text" name="posisi" value="<?= e($old['posisi'] ?? '') ?>" placeholder="Developer Backend" class="input-card" required/>
+              <input type="text" name="posisi" value="<?= e($old['posisi'] ?? '') ?>" placeholder="Staf Ahli / Pelaksana" class="input-card" required/>
             </div>
             <div class="form-group">
-              <label class="label">Tanggal Masuk *</label>
+              <label class="label">Status ASN *</label>
+              <select name="jenis_asn" class="input-card" required>
+                <option value="PNS" <?= ($old['jenis_asn']??'PNS')==='PNS'?'selected':'' ?>>PNS</option>
+                <option value="PPPK" <?= ($old['jenis_asn']??'')==='PPPK'?'selected':'' ?>>PPPK</option>
+                <option value="Non-ASN" <?= ($old['jenis_asn']??'')==='Non-ASN'?'selected':'' ?>>Honorer / Non-ASN</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="label">Golongan Ruang</label>
+              <select name="golongan" class="input-card">
+                <option value="">— Pilih —</option>
+                <?php foreach (['I/a','I/b','I/c','I/d','II/a','II/b','II/c','II/d','III/a','III/b','III/c','III/d','IV/a','IV/b','IV/c','IV/d','IV/e'] as $g): ?>
+                <option value="<?= $g ?>" <?= ($old['golongan']??'')===$g?'selected':'' ?>><?= $g ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="label">Pendidikan Terakhir</label>
+              <select name="pendidikan" class="input-card">
+                <option value="">— Pilih —</option>
+                <?php foreach (['SMA/SMK','D3','D4','S1','S2','S3'] as $p): ?>
+                <option value="<?= $p ?>" <?= ($old['pendidikan']??'')===$p?'selected':'' ?>><?= $p ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="label">Tanggal Masuk/TMT *</label>
               <input type="date" name="tgl_masuk" value="<?= e($old['tgl_masuk'] ?? date('Y-m-d')) ?>" class="input-card" required/>
             </div>
           </div>
@@ -218,7 +262,7 @@ $daftarDivisi = ['IT & Development','HRD & Administrasi','Finance & Akuntansi','
               <span class="material-symbols-outlined" style="font-size:20px;">save</span>
               Simpan Pegawai
             </button>
-            <a href="/simpeg_mini/pegawai.php" class="btn-ghost" style="padding:12px 24px;background:#ffffff;border:1px solid #eaecf0;">Batal</a>
+            <a href="/simpekabjmk/pegawai.php" class="btn-ghost" style="padding:12px 24px;background:#ffffff;border:1px solid #eaecf0;">Batal</a>
           </div>
         </form>
 
@@ -233,7 +277,7 @@ $daftarDivisi = ['IT & Development','HRD & Administrasi','Finance & Akuntansi','
               <div style="display:flex;align-items:start;gap:10px;"><span class="material-symbols-outlined" style="color:#10b981;background:#f0fdf4;border-radius:50%;padding:4px;font-size:16px;flex-shrink:0;">check</span><span style="padding-top:2px;">NIP harus unik di seluruh sistem</span></div>
               <div style="display:flex;align-items:start;gap:10px;"><span class="material-symbols-outlined" style="color:#10b981;background:#f0fdf4;border-radius:50%;padding:4px;font-size:16px;flex-shrink:0;">check</span><span style="padding-top:2px;">Password di-hash Bcrypt sebelum disimpan ke DB</span></div>
               <div style="display:flex;align-items:start;gap:10px;"><span class="material-symbols-outlined" style="color:#10b981;background:#f0fdf4;border-radius:50%;padding:4px;font-size:16px;flex-shrink:0;">check</span><span style="padding-top:2px;">Email digunakan untuk login</span></div>
-              <div style="display:flex;align-items:start;gap:10px;"><span class="material-symbols-outlined" style="color:#f59e0b;background:#fffbeb;border-radius:50%;padding:4px;font-size:16px;flex-shrink:0;">warning</span><span style="padding-top:2px;">Admin: akses penuh. Manager: lihat tim. Karyawan: akses terbatas.</span></div>
+              <div style="display:flex;align-items:start;gap:10px;"><span class="material-symbols-outlined" style="color:#f59e0b;background:#fffbeb;border-radius:50%;padding:4px;font-size:16px;flex-shrink:0;">warning</span><span style="padding-top:2px;">Super Admin: akses penuh. Admin BKPSDM: CRUD Pegawai. Atasan: lihat tim. Pegawai: akses terbatas.</span></div>
             </div>
           </div>
           <div class="card" style="border:1px solid #eaecf0;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
@@ -241,7 +285,7 @@ $daftarDivisi = ['IT & Development','HRD & Administrasi','Finance & Akuntansi','
               <span class="material-symbols-outlined" style="color:#8b5cf6;background:#f5f3ff;padding:8px;border-radius:12px;">policy</span>
               RBAC
             </h3>
-            <?php foreach ([['admin','#ef4444','Full akses sistem'],['manager','#f59e0b','Lihat absensi tim'],['karyawan','#0ea5e9','Absensi pribadi saja']] as [$r,$c,$desc]): ?>
+            <?php foreach ([['super_admin','#ef4444','Full akses sistem'],['eksekutif','#db2777','View-Only Statistik'],['admin_bkpsdm','#4f46e5','Kelola Master Data'],['atasan','#f59e0b','Approval & Absensi Tim'],['pegawai','#0ea5e9','Absensi & Layanan Pribadi']] as [$r,$c,$desc]): ?>
             <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #f1f5f9;">
               <?= roleBadge($r) ?>
               <span style="color:#64748b;font-size:13px;font-weight:500;"><?= $desc ?></span>

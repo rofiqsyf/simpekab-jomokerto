@@ -6,8 +6,8 @@
 -- ============================================================
 
 -- Buat dan pilih database
-CREATE DATABASE IF NOT EXISTS simpeg_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE simpeg_db;
+CREATE DATABASE IF NOT EXISTS simpekabjmk CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE simpekabjmk;
 
 -- ============================================================
 -- TABEL: users
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     nama            VARCHAR(150) NOT NULL,
     email           VARCHAR(150) NOT NULL UNIQUE,
     password        VARCHAR(255) NOT NULL,       -- Bcrypt hash (60+ char)
-    role            ENUM('admin','manager','karyawan') NOT NULL DEFAULT 'karyawan',
+    role            ENUM('super_admin','eksekutif','admin_bkpsdm','atasan','pegawai') NOT NULL DEFAULT 'pegawai',
     remember_token  VARCHAR(100) NULL,           -- SHA256 hash token remember me
     login_attempts  INT NOT NULL DEFAULT 0,      -- Untuk rate limiting
     locked_until    DATETIME NULL,               -- NULL = tidak dikunci
@@ -35,8 +35,13 @@ CREATE TABLE IF NOT EXISTS pegawai (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     user_id     INT NOT NULL UNIQUE,
     nip         VARCHAR(20) NOT NULL UNIQUE,
+    nik         VARCHAR(20) NULL,
+    npwp        VARCHAR(30) NULL,
     divisi      VARCHAR(100) NOT NULL,
     posisi      VARCHAR(100) NOT NULL,
+    golongan    VARCHAR(20) NULL,
+    pendidikan  VARCHAR(50) NULL,
+    jenis_asn   ENUM('PNS', 'PPPK', 'Non-ASN') NOT NULL DEFAULT 'PNS',
     no_telp     VARCHAR(20) NULL,
     tgl_masuk   DATE NOT NULL,
     status      ENUM('aktif','nonaktif','cuti') NOT NULL DEFAULT 'aktif',
@@ -81,6 +86,43 @@ CREATE TABLE IF NOT EXISTS activity_log (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+-- TABEL: pengajuan_layanan (Cuti, Izin, dll)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS pengajuan_layanan (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    user_id     INT NOT NULL,
+    jenis       ENUM('Cuti Tahunan','Cuti Sakit','Cuti Melahirkan','Izin Belajar') NOT NULL,
+    tanggal_mulai DATE NOT NULL,
+    tanggal_selesai DATE NOT NULL,
+    keterangan  TEXT NULL,
+    status      ENUM('pending_atasan','approved_atasan','approved_bkpsdm','rejected') NOT NULL DEFAULT 'pending_atasan',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- TABEL: kinerja_skp
+-- ============================================================
+CREATE TABLE IF NOT EXISTS kinerja_skp (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    user_id     INT NOT NULL,
+    bulan       VARCHAR(7) NULL,
+    kegiatan    TEXT NULL,
+    target      INT NULL,
+    realisasi   INT NULL,
+    capaian     INT NULL,
+    nilai_atasan INT NULL,
+    periode     VARCHAR(20) NOT NULL,
+    nilai       INT NULL,
+    catatan_atasan TEXT NULL,
+    status      ENUM('draft','submitted','reviewed') NOT NULL DEFAULT 'draft',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 -- SEED DATA: users
 -- Password di-hash menggunakan Bcrypt cost=12
 -- Gunakan seed_users.php untuk generate hash jika diperlukan
@@ -91,20 +133,23 @@ CREATE TABLE IF NOT EXISTS activity_log (
 -- ============================================================
 INSERT INTO users (nama, email, password, role) VALUES
 -- Password: admin123
-('Drs. Ahmad Hidayat, M.M.', 'admin@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
--- Password: manager123
-('Siti Rahayu, S.T.', 'manager.it@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'manager'),
-('Bima Prakoso, S.E.', 'manager.fin@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'manager'),
-('Rina Agustina, S.Sos.', 'manager.ops@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'manager'),
--- Password: karyawan123
-('Dedi Kurniawan', 'dedi@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'karyawan'),
-('Fitria Wulandari', 'fitria@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'karyawan'),
-('Rizky Pratama', 'rizky@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'karyawan'),
-('Novita Sari', 'novita@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'karyawan'),
-('Hendra Wijaya', 'hendra@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'karyawan'),
-('Mega Putri', 'mega@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'karyawan'),
-('Andi Saputra', 'andi@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'karyawan'),
-('Yunita Dewi', 'yunita@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'karyawan');
+('Drs. Ahmad Hidayat, M.M.', 'admin@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super_admin'),
+-- Eksekutif
+('Ir. Budi Santoso', 'bupati@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'eksekutif'),
+-- Admin BKPSDM
+('Siti Rahayu, S.T.', 'bkpsdm@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin_bkpsdm'),
+-- Atasan
+('Bima Prakoso, S.E.', 'kadis.kominfo@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'atasan'),
+('Rina Agustina, S.Sos.', 'kadis.kesehatan@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'atasan'),
+-- Pegawai
+('Dedi Kurniawan', 'dedi@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'pegawai'),
+('Fitria Wulandari', 'fitria@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'pegawai'),
+('Rizky Pratama', 'rizky@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'pegawai'),
+('Novita Sari', 'novita@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'pegawai'),
+('Hendra Wijaya', 'hendra@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'pegawai'),
+('Mega Putri', 'mega@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'pegawai'),
+('Andi Saputra', 'andi@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'pegawai'),
+('Yunita Dewi', 'yunita@simpeg.test', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'pegawai');
 
 -- ⚠️ CATATAN: Hash di atas adalah hash dari password='password' (bcrypt default).
 -- Jalankan seed_users.php untuk generate hash yang benar.
@@ -114,18 +159,19 @@ INSERT INTO users (nama, email, password, role) VALUES
 -- SEED DATA: pegawai
 -- ============================================================
 INSERT INTO pegawai (user_id, nip, divisi, posisi, no_telp, tgl_masuk, status) VALUES
-(1,  'NIP2020001', 'HRD & Administrasi',   'Kepala HRD',            '081234567890', '2020-01-15', 'aktif'),
-(2,  'NIP2021002', 'IT & Development',      'Manajer IT',            '081234567891', '2021-03-22', 'aktif'),
-(3,  'NIP2021003', 'Finance & Akuntansi',   'Manajer Finance',       '081234567892', '2021-06-10', 'aktif'),
-(4,  'NIP2022004', 'Operations',            'Manajer Operasional',   '081234567893', '2022-01-05', 'aktif'),
-(5,  'NIP2022005', 'IT & Development',      'Developer Backend',     '081234567894', '2022-08-17', 'aktif'),
-(6,  'NIP2023006', 'IT & Development',      'Developer Frontend',    '081234567895', '2023-02-01', 'aktif'),
-(7,  'NIP2023007', 'Finance & Akuntansi',   'Staff Keuangan',        '081234567896', '2023-04-15', 'aktif'),
-(8,  'NIP2023008', 'Finance & Akuntansi',   'Staf Akuntansi',        '081234567897', '2023-07-01', 'aktif'),
-(9,  'NIP2023009', 'Operations',            'Staf Operasional',      '081234567898', '2023-09-12', 'aktif'),
-(10, 'NIP2024010', 'Operations',            'Koordinator Lapangan',  '081234567899', '2024-01-15', 'aktif'),
-(11, 'NIP2024011', 'Marketing',             'Staf Marketing',        '081234567800', '2024-03-01', 'aktif'),
-(12, 'NIP2024012', 'Marketing',             'Desainer Grafis',       '081234567801', '2024-06-01', 'aktif');
+(1,  'NIP2020001', 'Diskominfo',            'Kepala Dinas',          '081234567890', '2020-01-15', 'aktif'),
+(2,  'NIP2021002', 'Bupati',                'Bupati',                '081234567891', '2021-03-22', 'aktif'),
+(3,  'NIP2021003', 'BKPSDM',                'Admin BKPSDM',          '081234567892', '2021-06-10', 'aktif'),
+(4,  'NIP2022004', 'Diskominfo',            'Kepala Bidang',         '081234567893', '2022-01-05', 'aktif'),
+(5,  'NIP2022005', 'Dinkes',                'Kepala Bidang',         '081234567894', '2022-08-17', 'aktif'),
+(6,  'NIP2023006', 'Diskominfo',            'Staf IT',               '081234567895', '2023-02-01', 'aktif'),
+(7,  'NIP2023007', 'Diskominfo',            'Staf Jaringan',         '081234567896', '2023-04-15', 'aktif'),
+(8,  'NIP2023008', 'Dinkes',                'Staf Administrasi',     '081234567897', '2023-07-01', 'aktif'),
+(9,  'NIP2023009', 'Dinkes',                'Staf Kesehatan',        '081234567898', '2023-09-12', 'aktif'),
+(10, 'NIP2024010', 'Satpol PP',             'Komandan Regu',         '081234567899', '2024-01-15', 'aktif'),
+(11, 'NIP2024011', 'Satpol PP',             'Anggota',               '081234567800', '2024-03-01', 'aktif'),
+(12, 'NIP2024012', 'Satpol PP',             'Anggota',               '081234567801', '2024-06-01', 'aktif'),
+(13, 'NIP2024013', 'Dinas Pendidikan',      'Staf Tata Usaha',       '081234567802', '2024-06-01', 'aktif');
 
 -- ============================================================
 -- SEED DATA: absensi (contoh data bulan ini)
@@ -154,11 +200,11 @@ INSERT INTO absensi (user_id, tanggal, check_in, check_out, status, keterangan, 
 -- SEED DATA: activity_log
 -- ============================================================
 INSERT INTO activity_log (user_id, aksi, detail, ip_address, level) VALUES
-(1, 'LOGIN_SUCCESS', 'Login berhasil sebagai admin', '127.0.0.1', 'info'),
-(2, 'LOGIN_SUCCESS', 'Login berhasil sebagai manager', '127.0.0.1', 'info'),
-(5, 'ABSENSI_CHECKIN', 'Check-in pukul 07:52', '127.0.0.1', 'info'),
+(1, 'LOGIN_SUCCESS', 'Login berhasil sebagai super_admin', '127.0.0.1', 'info'),
+(4, 'LOGIN_SUCCESS', 'Login berhasil sebagai atasan', '127.0.0.1', 'info'),
+(6, 'ABSENSI_CHECKIN', 'Check-in pukul 07:52', '127.0.0.1', 'info'),
 (NULL, 'LOGIN_FAILED', 'Percobaan login dengan email: attacker@evil.com (5x)', '45.33.12.98', 'critical'),
-(1, 'PEGAWAI_TAMBAH', 'Menambahkan pegawai baru: Yunita Dewi', '127.0.0.1', 'info');
+(3, 'PEGAWAI_TAMBAH', 'Menambahkan pegawai baru: Yunita Dewi', '127.0.0.1', 'info');
 
 --
 -- Table structure for table password_reset_requests

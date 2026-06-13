@@ -9,7 +9,7 @@ require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/helpers/auth_guard.php';
 require_once __DIR__ . '/helpers/functions.php';
 
-requireRole(['admin']); // Admin Only!
+requireRole(['super_admin']); // Admin Only!
 
 $currentPage = 'keamanan';
 $pageTitle   = 'Brankas Keamanan';
@@ -94,25 +94,26 @@ $lockedAccounts = $stmtLocked->fetchAll();
               <thead>
                 <tr>
                   <th>Kapabilitas</th>
-                  <th style="text-align:center;">Admin</th>
-                  <th style="text-align:center;">Manager</th>
-                  <th style="text-align:center;">Karyawan</th>
+                  <th style="text-align:center;">Super Admin</th>
+                  <th style="text-align:center;">Eks. / BKPSDM</th>
+                  <th style="text-align:center;">Atasan</th>
+                  <th style="text-align:center;">Pegawai</th>
                 </tr>
               </thead>
               <tbody>
                 <?php
                 $matrix = [
-                  ['Lihat Profil Sendiri',        true,  true,  true],
-                  ['Input Absensi Harian',         true,  true,  true],
-                  ['Ganti Password Sendiri',       true,  true,  true],
-                  ['Lihat Absensi Tim (Divisi)',   true,  true,  false],
-                  ['CRUD Data Pegawai',            true,  false, false],
-                  ['Lihat Semua Absensi',          true,  false, false],
-                  ['Reset Password Pegawai',       true,  false, false],
-                  ['Kelola Brankas Keamanan',      true,  false, false],
-                  ['Akses Log Aktivitas Sistem',   true,  false, false],
+                  ['Lihat Profil Sendiri',        true,  true,  true,  true],
+                  ['Input Absensi Harian',         true,  true,  true,  true],
+                  ['Ganti Password Sendiri',       true,  true,  true,  true],
+                  ['Lihat Absensi Tim (Divisi)',   true,  false, true,  false],
+                  ['CRUD Data Pegawai',            true,  true,  false, false],
+                  ['Lihat Semua Absensi',          true,  true,  false, false],
+                  ['Reset Password Pegawai',       true,  true,  false, false],
+                  ['Kelola Brankas Keamanan',      true,  false, false, false],
+                  ['Akses Log Aktivitas Sistem',   true,  false, false, false],
                 ];
-                foreach ($matrix as [$kap, $admin, $mgr, $kry]):
+                foreach ($matrix as [$kap, $admin, $bkpsdm, $atasan, $kry]):
                   $icon = fn($v) => $v
                     ? '<span class="material-symbols-outlined" style="color:#10b981;font-size:24px;" font-variation-settings="\'FILL\' 1">check_circle</span>'
                     : '<span class="material-symbols-outlined" style="color:#cbd5e1;font-size:24px;">cancel</span>';
@@ -120,7 +121,8 @@ $lockedAccounts = $stmtLocked->fetchAll();
                 <tr>
                   <td style="color:#475569;font-size:14px;font-weight:500;"><?= e($kap) ?></td>
                   <td style="text-align:center;"><?= $icon($admin) ?></td>
-                  <td style="text-align:center;"><?= $icon($mgr) ?></td>
+                  <td style="text-align:center;"><?= $icon($bkpsdm) ?></td>
+                  <td style="text-align:center;"><?= $icon($atasan) ?></td>
                   <td style="text-align:center;"><?= $icon($kry) ?></td>
                 </tr>
                 <?php endforeach; ?>
@@ -177,7 +179,7 @@ $lockedAccounts = $stmtLocked->fetchAll();
                 <td style="color:#ef4444;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:14px;"><?= e($la['login_attempts']) ?>x</td>
                 <td style="color:#f59e0b;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;"><?= e(date('d/m/Y H:i', strtotime($la['locked_until']))) ?></td>
                 <td>
-                  <a href="/simpeg_mini/reset_password.php?id=<?= $la['id'] ?>" class="btn-ghost" style="font-size:13px;padding:8px 16px;background:#ffffff;border:1px solid #eaecf0;font-weight:600;">
+                  <a href="/simpekabjmk/reset_password.php?id=<?= $la['id'] ?>" class="btn-ghost" style="font-size:13px;padding:8px 16px;background:#ffffff;border:1px solid #eaecf0;font-weight:600;">
                     <span class="material-symbols-outlined" style="font-size:18px;">lock_open</span>
                     Buka Kunci & Reset
                   </a>
@@ -224,7 +226,7 @@ $lockedAccounts = $stmtLocked->fetchAll();
             <span class="material-symbols-outlined" style="color:#3b82f6;background:#eff6ff;padding:8px;border-radius:12px;">radar</span>
             Log Aktivitas Terbaru
           </h2>
-          <a href="/simpeg_mini/log.php" class="btn-ghost" style="font-size:13px;padding:8px 16px;background:#ffffff;border:1px solid #eaecf0;font-weight:600;">
+          <a href="/simpekabjmk/log.php" class="btn-ghost" style="font-size:13px;padding:8px 16px;background:#ffffff;border:1px solid #eaecf0;font-weight:600;">
             <span class="material-symbols-outlined" style="font-size:18px;">open_in_new</span>
             Lihat Semua
           </a>

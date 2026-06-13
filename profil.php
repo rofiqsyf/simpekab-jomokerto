@@ -19,7 +19,7 @@ $errors      = [];
 // Ambil data lengkap dari DB
 $stmt = $pdo->prepare("
     SELECT u.id, u.nama, u.email, u.role, u.last_login, u.created_at, u.login_attempts, u.locked_until,
-           p.nip, p.divisi, p.posisi, p.no_telp, p.tgl_masuk, p.status
+           p.nip, p.nik, p.npwp, p.divisi, p.posisi, p.golongan, p.pendidikan, p.jenis_asn, p.no_telp, p.tgl_masuk, p.status
     FROM users u
     LEFT JOIN pegawai p ON p.user_id = u.id
     WHERE u.id = ?
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 logActivity($user['id'], 'PASSWORD_CHANGE', 'Ganti password — Bcrypt rehash', 'info');
                 setFlash('success', 'Password berhasil diperbarui dengan Bcrypt cost=12!');
-                redirect('/simpeg_mini/profil.php');
+                redirect('/simpekabjmk/profil.php');
             }
         }
     }
@@ -95,7 +95,7 @@ $sisaSesiSaatIni = sprintf('%02d:%02d', intdiv($sisaSesiDetik, 60), $sisaSesiDet
         @media (min-width: 1024px) { .profile-grid { grid-template-columns: 1fr 2fr; } }
         .profile-single { max-width: 500px; margin: 0 auto; }
       </style>
-      <div class="<?= hasRole('admin') ? 'profile-grid' : 'profile-single' ?>">
+      <div class="<?= hasRole('super_admin') ? 'profile-grid' : 'profile-single' ?>">
 
         <!-- Profile Card -->
         <div class="card" style="text-align:center;border:1px solid #eaecf0;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
@@ -105,16 +105,21 @@ $sisaSesiSaatIni = sprintf('%02d:%02d', intdiv($sisaSesiDetik, 60), $sisaSesiDet
 
           <div style="margin-top:24px;display:flex;flex-direction:column;gap:16px;text-align:left;padding-top:20px;border-top:1px solid #eaecf0;">
             <?php foreach ([
-              ['email',    $profil['email']],
-              ['apartment',$profil['divisi']   ?? '—'],
-              ['work',     $profil['posisi']   ?? '—'],
-              ['badge',    $profil['nip']      ?? '—'],
-              ['phone',    $profil['no_telp']  ?? '—'],
-              ['calendar_today', $profil['tgl_masuk'] ? formatTanggalId($profil['tgl_masuk']) : '—'],
-            ] as [$icon, $val]): ?>
-            <div style="display:flex;align-items:center;gap:12px;color:#475569;font-size:14px;font-weight:500;">
+              ['badge',    'NIP / NIK', ($profil['nip'] ?? '—') . ' / ' . ($profil['nik'] ?? '—')],
+              ['email',    'Email', $profil['email']],
+              ['school',   'Pendidikan', $profil['pendidikan'] ?? '—'],
+              ['stars',    'Golongan Ruang', ($profil['golongan'] ?? '—') . ' (' . ($profil['jenis_asn'] ?? 'PNS') . ')'],
+              ['apartment','Instansi/Unit Kerja', $profil['divisi'] ?? '—'],
+              ['work',     'Jabatan', $profil['posisi'] ?? '—'],
+              ['phone',    'No. Telepon', $profil['no_telp'] ?? '—'],
+              ['calendar_today', 'TMT / Tgl Masuk', $profil['tgl_masuk'] ? formatTanggalId($profil['tgl_masuk']) : '—'],
+            ] as [$icon, $label, $val]): ?>
+            <div style="display:flex;align-items:start;gap:12px;color:#1a1d1f;font-size:14px;font-weight:600;">
               <span class="material-symbols-outlined" style="color:#94a3b8;font-size:20px;flex-shrink:0;background:#f8fafc;padding:6px;border-radius:8px;"><?= $icon ?></span>
-              <?= e($val) ?>
+              <div>
+                <div style="color:#64748b;font-size:12px;font-weight:500;margin-bottom:2px;"><?= $label ?></div>
+                <div><?= e($val) ?></div>
+              </div>
             </div>
             <?php endforeach; ?>
           </div>
@@ -125,11 +130,47 @@ $sisaSesiSaatIni = sprintf('%02d:%02d', intdiv($sisaSesiDetik, 60), $sisaSesiDet
           </button>
         </div>
 
-        <!-- Security Info -->
-        <?php if (hasRole('admin')): ?>
+        </div>
+        
+        <!-- Tab Konten Kanan -->
         <div style="display:flex;flex-direction:column;gap:24px;">
+          <!-- E-Wallet Digital Locker -->
+          <div class="card" style="border:1px solid #eaecf0;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+              <h3 style="font-size:16px;font-weight:700;color:#1a1d1f;display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined" style="color:#8b5cf6;background:#f5f3ff;padding:8px;border-radius:12px;">folder_open</span>
+                E-Wallet Dokumen (Digital Locker)
+              </h3>
+              <button class="btn-primary" style="padding:8px 16px;font-size:13px;" onclick="alert('Fitur unggah berkas sedang dikembangkan.')">
+                <span class="material-symbols-outlined" style="font-size:16px;">upload</span> Unggah
+              </button>
+            </div>
+            <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
+              <?php foreach ([
+                ['SK CPNS', 'sk_cpns.pdf', 'Telah Diverifikasi BKN', '#10b981'],
+                ['SK PNS', 'sk_pns.pdf', 'Telah Diverifikasi BKN', '#10b981'],
+                ['SK Jabatan Terakhir', 'sk_jabatan.pdf', 'Telah Diverifikasi BKPSDM', '#10b981'],
+                ['Ijazah Terakhir', 'ijazah.pdf', 'Telah Diverifikasi BKPSDM', '#10b981'],
+                ['Sertifikat Diklat PIM', '-', 'Belum Diunggah', '#ef4444'],
+              ] as [$doc, $file, $status, $color]): ?>
+              <div style="border:1px solid #eaecf0;border-radius:12px;padding:16px;display:flex;align-items:center;gap:16px;background:#ffffff;">
+                <div style="width:48px;height:48px;border-radius:12px;background:#f8fafc;display:flex;align-items:center;justify-content:center;color:#64748b;flex-shrink:0;">
+                  <span class="material-symbols-outlined" style="font-size:24px;"><?= $file !== '-' ? 'picture_as_pdf' : 'warning' ?></span>
+                </div>
+                <div>
+                  <div style="font-size:14px;font-weight:700;color:#1a1d1f;margin-bottom:4px;"><?= $doc ?></div>
+                  <?php if ($file !== '-'): ?>
+                  <a href="#" style="color:#3b82f6;font-size:13px;font-weight:500;text-decoration:none;display:block;margin-bottom:4px;"><?= $file ?></a>
+                  <?php endif; ?>
+                  <div style="color:<?= $color ?>;font-size:12px;font-weight:600;"><?= $status ?></div>
+                </div>
+              </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
 
-          <!-- Sesi Aktif -->
+          <!-- Security Info -->
+          <?php if (hasRole('super_admin')): ?>
           <div class="card" style="border:1px solid #eaecf0;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
             <h3 style="font-size:16px;font-weight:700;color:#1a1d1f;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
               <span class="material-symbols-outlined" style="color:#0ea5e9;background:#e0f2fe;padding:8px;border-radius:12px;">timer</span>
@@ -150,29 +191,6 @@ $sisaSesiSaatIni = sprintf('%02d:%02d', intdiv($sisaSesiDetik, 60), $sisaSesiDet
             </div>
           </div>
 
-          <!-- Cookie & Remember Me -->
-          <div class="card" style="border:1px solid #eaecf0;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
-            <h3 style="font-size:16px;font-weight:700;color:#1a1d1f;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
-              <span class="material-symbols-outlined" style="color:#f59e0b;background:#fffbeb;padding:8px;border-radius:12px;">cookie</span>
-              Cookie & Remember Me
-            </h3>
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <?php foreach ([
-                ['SIMPEG_SESS (Session Cookie)', 'HttpOnly | SameSite=Strict | use_only_cookies=1', !empty(session_id())],
-                ['simpeg_remember (Remember Me)', 'SHA256 Hash | Expire: 30 hari | Token Rotation', !empty($_COOKIE['simpeg_remember'])],
-              ] as [$nama, $desc, $aktif]): ?>
-              <div style="display:flex;justify-content:space-between;align-items:start;padding:16px;background:#ffffff;border:1px solid #eaecf0;border-radius:12px;">
-                <div>
-                  <div style="color:#1a1d1f;font-weight:700;font-size:14px;margin-bottom:4px;"><?= e($nama) ?></div>
-                  <div style="color:#64748b;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;"><?= e($desc) ?></div>
-                </div>
-                <?= $aktif ? '<span class="badge badge-active" style="padding:6px 12px;font-size:12px;">Aktif</span>' : '<span class="badge badge-secondary" style="padding:6px 12px;font-size:12px;">Nonaktif</span>' ?>
-              </div>
-              <?php endforeach; ?>
-            </div>
-          </div>
-
-          <!-- Keamanan Akun -->
           <div class="card" style="border:1px solid #eaecf0;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
             <h3 style="font-size:16px;font-weight:700;color:#1a1d1f;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
               <span class="material-symbols-outlined" style="color:#10b981;background:#f0fdf4;padding:8px;border-radius:12px;">key</span>
@@ -196,8 +214,8 @@ $sisaSesiSaatIni = sprintf('%02d:%02d', intdiv($sisaSesiDetik, 60), $sisaSesiDet
               <?php endforeach; ?>
             </div>
           </div>
+          <?php endif; ?>
         </div>
-        <?php endif; ?>
       </div>
     </div>
   </div>

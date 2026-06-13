@@ -1,5 +1,5 @@
-# SIMPEKAB JOMOKERTO — Mini Project Pertemuan 9
-### Sistem Informasi Kepegawaian dengan PHP + MySQL + RBAC
+# SIMPEKAB JOMOKERTO — Sistem Informasi Manajemen Kepegawaian Kabupaten Jomokerto
+### Mini Project PHP + MySQL + RBAC
 **Mata Kuliah:** Pemrograman Web | **Dosen:** M. Alif Muwafiq Baihaqy, M.Kom | **FASTIKOM UNSIQ**
 
 ---

@@ -18,6 +18,40 @@ $currentPage = 'dashboard_admin_bkpsdm';
 $pageTitle   = 'Dashboard BKPSDM';
 $user        = currentUser();
 
+// ============================================================
+// PROSES FORM (POST)
+// ============================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'proses_kgb_massal') {
+    validateCsrfToken();
+    $stmtKGB = $pdo->prepare("SELECT id, user_id, tmt_kgb FROM pegawai WHERE status = 'aktif' AND DATE_ADD(tmt_kgb, INTERVAL 2 YEAR) <= CURDATE()");
+    $stmtKGB->execute();
+    $eligible = $stmtKGB->fetchAll();
+    
+    if (count($eligible) > 0) {
+        $pdo->beginTransaction();
+        try {
+            $stmtInsertRiwayat = $pdo->prepare("INSERT INTO riwayat_kgb (user_id, tmt_lama, tmt_baru) VALUES (?, ?, ?)");
+            $stmtUpdatePegawai = $pdo->prepare("UPDATE pegawai SET tmt_kgb = ? WHERE id = ?");
+            
+            foreach ($eligible as $p) {
+                // Tambah 2 tahun
+                $tmtBaru = date('Y-m-d', strtotime('+2 years', strtotime($p['tmt_kgb'])));
+                $stmtInsertRiwayat->execute([$p['user_id'], $p['tmt_kgb'], $tmtBaru]);
+                $stmtUpdatePegawai->execute([$tmtBaru, $p['id']]);
+            }
+            $pdo->commit();
+            logActivity($user['id'], 'KGB_MASSAL', 'Memproses KGB otomatis untuk ' . count($eligible) . ' pegawai', 'info');
+            setFlash('success', 'Berhasil menerbitkan draf SK KGB untuk ' . count($eligible) . ' pegawai.');
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            setFlash('error', 'Terjadi kesalahan sistem saat memproses KGB.');
+        }
+    } else {
+        setFlash('warning', 'Tidak ada pegawai yang memenuhi syarat KGB.');
+    }
+    redirect('/simpekabjmk/dashboard_admin_bkpsdm.php');
+}
+
 // 1. Verifikasi Queue (approved_atasan)
 $stmtApproveBKPSDM = $pdo->prepare("
     SELECT pl.*, u.nama, p.nip, p.divisi
@@ -53,6 +87,13 @@ foreach ($stmtAktifStats->fetchAll() as $s) {
 }
 $totalAktif = $aktifStats['aktif'] ?? 0;
 $totalNonaktif = ($aktifStats['nonaktif'] ?? 0) + ($aktifStats['cuti'] ?? 0);
+
+// 4. Deteksi KGB (Pegawai aktif yang tmt_kgb >= 2 tahun lalu)
+$stmtEligibleKGB = $pdo->prepare("SELECT id FROM pegawai WHERE status = 'aktif' AND DATE_ADD(tmt_kgb, INTERVAL 2 YEAR) <= CURDATE()");
+$stmtEligibleKGB->execute();
+$countKGB = $stmtEligibleKGB->rowCount();
+
+generateCsrfToken();
 ?>
 <?php include __DIR__ . '/partials/head.php'; ?>
 <div class="app-layout">
@@ -60,6 +101,7 @@ $totalNonaktif = ($aktifStats['nonaktif'] ?? 0) + ($aktifStats['cuti'] ?? 0);
   <div class="main-content">
     <?php include __DIR__ . '/partials/topbar.php'; ?>
     <div class="page-content">
+      <?= renderFlash() ?>
       
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:32px;">
         <div>
@@ -184,10 +226,26 @@ $totalNonaktif = ($aktifStats['nonaktif'] ?? 0) + ($aktifStats['cuti'] ?? 0);
                 <h2 style="font-size:16px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
                     <span class="material-symbols-outlined">auto_awesome</span> Kenaikan Gaji Berkala
                 </h2>
-                <p style="font-size:13px;opacity:0.9;margin-bottom:16px;">Terdapat 12 pegawai yang memenuhi syarat KGB otomatis bulan ini.</p>
-                <button class="btn-primary" style="background:#ffffff;color:#4f46e5;width:100%;justify-content:center;">
-                    Proses Massal Sekarang
-                </button>
+                <?php if ($countKGB > 0): ?>
+                    <p style="font-size:13px;opacity:0.9;margin-bottom:16px;">Terdapat <strong><?= $countKGB ?> pegawai</strong> yang memenuhi syarat KGB otomatis bulan ini.</p>
+                    <form method="POST" action="" onsubmit="return confirm('Proses SK Kenaikan Gaji Berkala untuk <?= $countKGB ?> pegawai?');">
+                        <?= csrfInput() ?>
+                        <input type="hidden" name="action" value="proses_kgb_massal">
+                        <button type="submit" class="btn-primary" style="background:#ffffff;color:#4f46e5;width:100%;justify-content:center;">
+                            Proses Massal Sekarang
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <p style="font-size:13px;opacity:0.9;margin-bottom:16px;">Belum ada pegawai yang memenuhi syarat KGB (siklus 2 tahun) untuk saat ini.</p>
+                    <button class="btn-primary" style="background:rgba(255,255,255,0.2);color:#ffffff;width:100%;justify-content:center;cursor:not-allowed;" disabled>
+                        Semua Tuntas
+                    </button>
+                <?php endif; ?>
+                <div style="margin-top:16px;text-align:center;">
+                    <a href="/simpekabjmk/riwayat_kgb.php" style="color:#e0e7ff;font-size:13px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:4px;transition:color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='#e0e7ff'">
+                        <span class="material-symbols-outlined" style="font-size:16px;">history</span> Lihat Laporan Riwayat KGB
+                    </a>
+                </div>
             </div>
         </div>
 

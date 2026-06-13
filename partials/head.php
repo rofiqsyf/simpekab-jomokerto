@@ -67,6 +67,12 @@
     .input-card { width: 100%; background: #f8fafc; border: 1px solid #eaecf0; padding: 12px 16px; border-radius: 12px; color: #1a1d1f; font-size: 15px; outline: none; transition: all 0.2s; font-family: 'Inter', sans-serif; }
     .input-card:focus { background: #ffffff; border-color: #ffb800; box-shadow: 0 0 0 3px rgba(255,184,0,0.15); }
     .input-card::placeholder { color: #9a9fa5; }
+
+    /* File Inputs Styling */
+    input[type="file"] { padding: 8px 12px; color: #64748b; background: #ffffff; cursor: pointer; border: 1px dashed #cbd5e1; }
+    input[type="file"]:hover { border-color: #94a3b8; background: #f8fafc; }
+    input[type="file"]::file-selector-button { margin-right: 16px; border: none; background: #e0e7ff; color: #4f46e5; padding: 8px 16px; border-radius: 999px; font-weight: 600; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.2s; }
+    input[type="file"]::file-selector-button:hover { background: #c7d2fe; color: #4338ca; }
     
     .label { display: block; font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 8px; }
 

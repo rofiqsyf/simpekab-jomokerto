@@ -94,7 +94,8 @@ document.addEventListener('DOMContentLoaded', function() {
         { name: 'Approval Layanan', url: '/simpekabjmk/layanan_approval.php', icon: 'verified_user' },
         <?php endif; ?>
         <?php if (hasAnyRole(['super_admin','admin_bkpsdm'])): ?>
-        { name: 'Verifikasi BKPSDM', url: '/simpekabjmk/layanan_verifikasi.php', icon: 'domain_verification' },
+        { name: 'Verifikasi Cuti/Izin', url: '/simpekabjmk/layanan_verifikasi.php', icon: 'domain_verification' },
+        { name: 'Verifikasi Dokumen', url: '/simpekabjmk/dokumen_verifikasi.php', icon: 'plagiarism' },
         { name: 'Data Pegawai', url: '/simpekabjmk/pegawai.php', icon: 'badge' },
         { name: 'Bantuan IT', url: '/simpekabjmk/permintaan_reset.php', icon: 'support_agent' },
         { name: 'Brankas Keamanan', url: '/simpekabjmk/keamanan.php', icon: 'shield' },

@@ -69,12 +69,16 @@ $fg  = $avatarTextColors[$role] ?? '#0ea5e9';
       Pengajuan Layanan
     </a>
 
-    <?php if (hasAnyRole(['super_admin','admin_bkpsdm','atasan'])): ?>
+    <?php if (hasAnyRole(['super_admin','admin_bkpsdm','atasan','eksekutif'])): ?>
     <div style="padding:16px 24px 8px;color:#94a3b8;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Manajemen Tim</div>
+    
+    <?php if (hasAnyRole(['super_admin','admin_bkpsdm','atasan'])): ?>
     <a href="/simpekabjmk/absensi_tim.php" class="nav-item <?= $currentPage==='absensi_tim'?'active':'' ?>">
       <span class="material-symbols-outlined">groups</span>
       Absensi Tim
     </a>
+    <?php endif; ?>
+
     <?php if (hasAnyRole(['super_admin','atasan'])): ?>
     <a href="/simpekabjmk/kinerja_evaluasi.php" class="nav-item <?= $currentPage==='kinerja_evaluasi'?'active':'' ?>">
       <span class="material-symbols-outlined">fact_check</span>
@@ -88,9 +92,19 @@ $fg  = $avatarTextColors[$role] ?? '#0ea5e9';
     <?php if (hasAnyRole(['super_admin','admin_bkpsdm'])): ?>
     <a href="/simpekabjmk/layanan_verifikasi.php" class="nav-item <?= $currentPage==='layanan_verifikasi'?'active':'' ?>">
       <span class="material-symbols-outlined">domain_verification</span>
-      Verifikasi BKPSDM
+      Verifikasi Cuti/Izin
+    </a>
+    <a href="/simpekabjmk/dokumen_verifikasi.php" class="nav-item <?= $currentPage==='dokumen_verifikasi'?'active':'' ?>">
+      <span class="material-symbols-outlined">plagiarism</span>
+      Verifikasi Dokumen
     </a>
     <?php endif; ?>
+    
+    <!-- Laporan KGB yang bisa dilihat atasan & eksekutif -->
+    <a href="/simpekabjmk/riwayat_kgb.php" class="nav-item <?= $currentPage==='riwayat_kgb'?'active':'' ?>">
+      <span class="material-symbols-outlined">history</span>
+      Laporan Riwayat KGB
+    </a>
     <?php endif; ?>
 
     <?php if (hasRole('super_admin') || hasRole('admin_bkpsdm')): ?>

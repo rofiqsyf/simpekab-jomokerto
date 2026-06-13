@@ -238,7 +238,7 @@ $csrfToken = generateCsrfToken();
           <h2 style="font-size:18px;font-weight:700;color:#1a1d1f;">Riwayat Absensi — <?= date('F Y') ?></h2>
           <div style="display:flex;gap:12px;align-items:center;">
             <span class="badge badge-secondary" style="font-size:13px;"><?= count($riwayat) ?> entri</span>
-            <button class="btn-ghost" style="border:1px solid #eaecf0;background:#ffffff;font-size:13px;padding:8px 16px;" onclick="alert('Formulir pengajuan koreksi (Lupa Absen / Tugas Luar) sedang dikembangkan.')">
+            <button class="btn-ghost" style="border:1px solid #eaecf0;background:#ffffff;font-size:13px;padding:8px 16px;" onclick="window.location.href='/simpekabjmk/layanan_pengajuan.php?jenis=koreksi'">
               <span class="material-symbols-outlined" style="font-size:16px;">edit_calendar</span> Ajukan Koreksi
             </button>
           </div>

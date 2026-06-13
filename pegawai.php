@@ -104,8 +104,9 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
         <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
           <div style="position:relative;flex:1;min-width:250px;">
             <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:20px;pointer-events:none;">search</span>
-            <input type="text" name="q" value="<?= e($search) ?>" placeholder="Cari nama, email, atau NIP..."
-              class="input-card" style="padding-left:40px;width:100%;"/>
+            <input type="text" name="q" id="searchInput" value="<?= e($search) ?>" placeholder="Cari nama, email, atau NIP..."
+              class="input-card" style="padding-left:40px;width:100%;" autocomplete="off"/>
+            <div id="autocompleteDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #eaecf0;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.1);z-index:100;margin-top:4px;overflow:hidden;flex-direction:column;"></div>
           </div>
           <select name="role" class="input-card" style="min-width:140px;width:auto;">
             <option value="">Semua Role</option>
@@ -233,3 +234,65 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
 </div>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>
+
+<script>
+// Smart Autocomplete Logic
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    const dropdown = document.getElementById('autocompleteDropdown');
+    let timeoutId;
+
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        clearTimeout(timeoutId);
+
+        if (query.length < 2) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        timeoutId = setTimeout(() => {
+            fetch(`/simpekabjmk/api_search_pegawai.php?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    dropdown.innerHTML = '';
+                    if (data.error) return;
+
+                    if (data.length === 0) {
+                        dropdown.innerHTML = `<div style="padding:16px;color:#94a3b8;font-size:13px;text-align:center;">Tidak ditemukan</div>`;
+                        dropdown.style.display = 'flex';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.style.cssText = "padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;align-items:center;gap:12px;transition:background 0.2s;";
+                        div.onmouseover = () => div.style.background = '#f8fafc';
+                        div.onmouseout = () => div.style.background = 'transparent';
+                        div.onclick = () => {
+                            window.location.href = `/simpekabjmk/pegawai.php?q=${encodeURIComponent(item.nama)}`;
+                        };
+
+                        const initials = item.nama.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+                        div.innerHTML = `
+                            <div style="width:36px;height:36px;border-radius:50%;background:#e0f2fe;color:#0ea5e9;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">${initials}</div>
+                            <div style="overflow:hidden;">
+                                <div style="font-weight:600;color:#1a1d1f;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.nama}</div>
+                                <div style="color:#64748b;font-size:11px;font-family:'JetBrains Mono',monospace;">${item.nip || item.email}</div>
+                            </div>
+                        `;
+                        dropdown.appendChild(div);
+                    });
+                    dropdown.style.display = 'flex';
+                });
+        }, 300); // 300ms debounce
+    });
+
+    // Sembunyikan dropdown jika klik di luar
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+});
+</script>

@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS pegawai (
     jenis_asn   ENUM('PNS', 'PPPK', 'Non-ASN') NOT NULL DEFAULT 'PNS',
     no_telp     VARCHAR(20) NULL,
     tgl_masuk   DATE NOT NULL,
+    tmt_kgb     DATE NULL,                        -- Terhitung Mulai Tanggal KGB
     status      ENUM('aktif','nonaktif','cuti') NOT NULL DEFAULT 'aktif',
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -60,8 +61,9 @@ CREATE TABLE IF NOT EXISTS absensi (
     tanggal     DATE NOT NULL,
     check_in    TIME NULL,
     check_out   TIME NULL,
-    status      ENUM('hadir','terlambat','alpha','izin','sakit') NOT NULL DEFAULT 'hadir',
+    status      ENUM('hadir','terlambat','alpha','izin','sakit','menunggu_konfirmasi') NOT NULL DEFAULT 'hadir',
     keterangan  VARCHAR(255) NULL,
+    bukti_foto  VARCHAR(255) NULL,                -- Foto bukti untuk WFA / luar radius
     durasi_mnt  INT NULL,                         -- Durasi kerja dalam menit
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -91,7 +93,7 @@ CREATE TABLE IF NOT EXISTS activity_log (
 CREATE TABLE IF NOT EXISTS pengajuan_layanan (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     user_id     INT NOT NULL,
-    jenis       ENUM('Cuti Tahunan','Cuti Sakit','Cuti Melahirkan','Izin Belajar') NOT NULL,
+    jenis       ENUM('Cuti Tahunan','Cuti Sakit','Cuti Melahirkan','Izin Belajar','Koreksi Absensi') NOT NULL,
     tanggal_mulai DATE NOT NULL,
     tanggal_selesai DATE NOT NULL,
     keterangan  TEXT NULL,
@@ -216,4 +218,17 @@ CREATE TABLE IF NOT EXISTS password_reset_requests (
     jenis_layanan VARCHAR(100) DEFAULT 'Lupa Sandi',
     status ENUM('pending', 'resolved') DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- TABEL: riwayat_kgb
+-- Riwayat Kenaikan Gaji Berkala otomatis
+-- ============================================================
+CREATE TABLE IF NOT EXISTS riwayat_kgb (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tmt_lama DATE NOT NULL,
+    tmt_baru DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

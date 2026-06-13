@@ -25,7 +25,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validateCsrfToken();
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'sync_siasn') {
+    if ($action === 'proses_kgb_massal') {
+        $stmtKGB = $pdo->prepare("SELECT id, user_id, tmt_kgb FROM pegawai WHERE status = 'aktif' AND DATE_ADD(tmt_kgb, INTERVAL 2 YEAR) <= CURDATE()");
+        $stmtKGB->execute();
+        $eligible = $stmtKGB->fetchAll();
+        
+        if (count($eligible) > 0) {
+            $pdo->beginTransaction();
+            try {
+                $stmtInsertRiwayat = $pdo->prepare("INSERT INTO riwayat_kgb (user_id, tmt_lama, tmt_baru) VALUES (?, ?, ?)");
+                $stmtUpdatePegawai = $pdo->prepare("UPDATE pegawai SET tmt_kgb = ? WHERE id = ?");
+                
+                foreach ($eligible as $p) {
+                    $tmtBaru = date('Y-m-d', strtotime('+2 years', strtotime($p['tmt_kgb'])));
+                    $stmtInsertRiwayat->execute([$p['user_id'], $p['tmt_kgb'], $tmtBaru]);
+                    $stmtUpdatePegawai->execute([$tmtBaru, $p['id']]);
+                }
+                $pdo->commit();
+                logActivity($user['id'], 'KGB_MASSAL', 'Memproses KGB otomatis untuk ' . count($eligible) . ' pegawai', 'info');
+                setFlash('success', 'Berhasil menerbitkan draf SK KGB untuk ' . count($eligible) . ' pegawai.');
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                setFlash('error', 'Terjadi kesalahan sistem saat memproses KGB.');
+            }
+        } else {
+            setFlash('warning', 'Tidak ada pegawai yang memenuhi syarat KGB.');
+        }
+        redirect('/simpekabjmk/dashboard_super_admin.php');
+    } elseif ($action === 'sync_siasn') {
         logActivity($user['id'], 'SYSTEM_SYNC', 'Menjalankan sinkronisasi massal SIASN BKN', 'info');
         setFlash('success', 'Perintah sinkronisasi SIASN berhasil dijadwalkan dan akan berjalan di latar belakang (Background Worker).');
     } elseif ($action === 'backup_db') {
@@ -58,6 +85,11 @@ $lockedCount = $stmtLocked->fetchColumn();
 // 3. Status Database (Mock Size)
 $dbSize = '45.2 MB'; 
 $uptime = '99.98%';
+
+// 4. Deteksi KGB (Sama seperti dashboard BKPSDM)
+$stmtEligibleKGB = $pdo->prepare("SELECT id FROM pegawai WHERE status = 'aktif' AND DATE_ADD(tmt_kgb, INTERVAL 2 YEAR) <= CURDATE()");
+$stmtEligibleKGB->execute();
+$countKGB = $stmtEligibleKGB->rowCount();
 ?>
 <?php include __DIR__ . '/partials/head.php'; ?>
 <div class="app-layout">
@@ -142,35 +174,64 @@ $uptime = '99.98%';
         </div>
 
         <!-- Quick Actions -->
-        <div class="card" style="border:1px solid #eaecf0;background:#ffffff;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
-          <h2 style="font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;color:#1a1d1f;">
-            <span class="material-symbols-outlined" style="color:#8b5cf6;">build</span> Alat Sistem
-          </h2>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <form method="POST" style="margin:0;">
-              <?= csrfInput() ?>
-              <input type="hidden" name="action" value="sync_siasn">
-              <button type="submit" class="btn-ghost" style="width:100%;justify-content:flex-start;background:#f8fafc;border:1px solid #eaecf0;color:#1a1d1f;font-weight:600;" onclick="return confirm('Mulai proses sinkronisasi massal dengan server SIASN BKN? Proses ini memakan waktu.')">
-                <span class="material-symbols-outlined" style="color:#0ea5e9;">sync</span> Sinkronisasi SIASN
-              </button>
-            </form>
-            
-            <form method="POST" style="margin:0;">
-              <?= csrfInput() ?>
-              <input type="hidden" name="action" value="backup_db">
-              <button type="submit" class="btn-ghost" style="width:100%;justify-content:flex-start;background:#f8fafc;border:1px solid #eaecf0;color:#1a1d1f;font-weight:600;" onclick="return confirm('Lakukan backup database instan sekarang?')">
-                <span class="material-symbols-outlined" style="color:#10b981;">backup</span> Jalankan Backup DB
-              </button>
-            </form>
+        <div style="display:flex;flex-direction:column;gap:24px;">
+            <div class="card" style="border:1px solid #eaecf0;background:#ffffff;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
+            <h2 style="font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;color:#1a1d1f;">
+                <span class="material-symbols-outlined" style="color:#8b5cf6;">build</span> Alat Sistem
+            </h2>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+                <form method="POST" style="margin:0;">
+                <?= csrfInput() ?>
+                <input type="hidden" name="action" value="sync_siasn">
+                <button type="submit" class="btn-ghost" style="width:100%;justify-content:flex-start;background:#f8fafc;border:1px solid #eaecf0;color:#1a1d1f;font-weight:600;" onclick="return confirm('Mulai proses sinkronisasi massal dengan server SIASN BKN? Proses ini memakan waktu.')">
+                    <span class="material-symbols-outlined" style="color:#0ea5e9;">sync</span> Sinkronisasi SIASN
+                </button>
+                </form>
+                
+                <form method="POST" style="margin:0;">
+                <?= csrfInput() ?>
+                <input type="hidden" name="action" value="backup_db">
+                <button type="submit" class="btn-ghost" style="width:100%;justify-content:flex-start;background:#f8fafc;border:1px solid #eaecf0;color:#1a1d1f;font-weight:600;" onclick="return confirm('Lakukan backup database instan sekarang?')">
+                    <span class="material-symbols-outlined" style="color:#10b981;">backup</span> Jalankan Backup DB
+                </button>
+                </form>
 
-            <form method="POST" style="margin:0;">
-              <?= csrfInput() ?>
-              <input type="hidden" name="action" value="clear_cache">
-              <button type="submit" class="btn-ghost" style="width:100%;justify-content:flex-start;background:#f8fafc;border:1px solid #eaecf0;color:#1a1d1f;font-weight:600;" onclick="return confirm('Peringatan: Membersihkan cache dapat menyebabkan beberapa user ter-logout jika sesinya expired. Lanjutkan?')">
-                <span class="material-symbols-outlined" style="color:#f59e0b;">cleaning_services</span> Clear Cache & Session
-              </button>
-            </form>
-          </div>
+                <form method="POST" style="margin:0;">
+                <?= csrfInput() ?>
+                <input type="hidden" name="action" value="clear_cache">
+                <button type="submit" class="btn-ghost" style="width:100%;justify-content:flex-start;background:#f8fafc;border:1px solid #eaecf0;color:#1a1d1f;font-weight:600;" onclick="return confirm('Peringatan: Membersihkan cache dapat menyebabkan beberapa user ter-logout jika sesinya expired. Lanjutkan?')">
+                    <span class="material-symbols-outlined" style="color:#f59e0b;">cleaning_services</span> Clear Cache & Session
+                </button>
+                </form>
+            </div>
+            </div>
+
+            <!-- KGB Massal khusus Super Admin -->
+            <div class="card" style="border:1px solid #eaecf0;background:linear-gradient(135deg, #4f46e5, #4338ca);color:#fff;">
+                <h2 style="font-size:16px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+                    <span class="material-symbols-outlined">auto_awesome</span> Kenaikan Gaji Berkala
+                </h2>
+                <?php if ($countKGB > 0): ?>
+                    <p style="font-size:13px;opacity:0.9;margin-bottom:16px;">Terdapat <strong><?= $countKGB ?> pegawai</strong> yang memenuhi syarat KGB otomatis bulan ini.</p>
+                    <form method="POST" action="" onsubmit="return confirm('Proses SK Kenaikan Gaji Berkala untuk <?= $countKGB ?> pegawai?');">
+                        <?= csrfInput() ?>
+                        <input type="hidden" name="action" value="proses_kgb_massal">
+                        <button type="submit" class="btn-primary" style="background:#ffffff;color:#4f46e5;width:100%;justify-content:center;">
+                            Proses Massal Sekarang
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <p style="font-size:13px;opacity:0.9;margin-bottom:16px;">Belum ada pegawai yang memenuhi syarat KGB (siklus 2 tahun) untuk saat ini.</p>
+                    <button class="btn-primary" style="background:rgba(255,255,255,0.2);color:#ffffff;width:100%;justify-content:center;cursor:not-allowed;" disabled>
+                        Semua Tuntas
+                    </button>
+                <?php endif; ?>
+                <div style="margin-top:16px;text-align:center;">
+                    <a href="/simpekabjmk/riwayat_kgb.php" style="color:#e0e7ff;font-size:13px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:4px;transition:color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='#e0e7ff'">
+                        <span class="material-symbols-outlined" style="font-size:16px;">history</span> Laporan Riwayat KGB
+                    </a>
+                </div>
+            </div>
         </div>
 
         <!-- Widget Absensi Mandiri -->

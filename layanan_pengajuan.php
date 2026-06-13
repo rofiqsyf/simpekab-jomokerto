@@ -57,12 +57,14 @@ generateCsrfToken();
             <?= csrfInput() ?>
             <div class="form-group">
               <label class="label">Jenis Layanan</label>
+              <?php $prefilledJenis = $_GET['jenis'] ?? ''; ?>
               <select name="jenis" class="input-card" required>
                 <option value="">— Pilih Layanan —</option>
-                <option value="Cuti Tahunan">Cuti Tahunan</option>
-                <option value="Cuti Sakit">Cuti Sakit</option>
-                <option value="Cuti Melahirkan">Cuti Melahirkan</option>
-                <option value="Izin Belajar">Izin Belajar</option>
+                <option value="Cuti Tahunan" <?= $prefilledJenis === 'cuti_tahunan' ? 'selected' : '' ?>>Cuti Tahunan</option>
+                <option value="Cuti Sakit" <?= $prefilledJenis === 'cuti_sakit' ? 'selected' : '' ?>>Cuti Sakit</option>
+                <option value="Cuti Melahirkan" <?= $prefilledJenis === 'cuti_melahirkan' ? 'selected' : '' ?>>Cuti Melahirkan</option>
+                <option value="Izin Belajar" <?= $prefilledJenis === 'izin_belajar' ? 'selected' : '' ?>>Izin Belajar</option>
+                <option value="Koreksi Absensi" <?= $prefilledJenis === 'koreksi' ? 'selected' : '' ?>>Koreksi Absensi (Lupa Absen / Tugas Luar)</option>
               </select>
             </div>
             <div class="form-row cols-2">

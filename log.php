@@ -126,6 +126,9 @@ foreach ($stmtLevelStats->fetchAll() as $s) { $levelStats[$s['level']] = $s['c']
             Reset
           </a>
           <?php endif; ?>
+          <a href="/simpekabjmk/export_log.php?level=<?= urlencode($filterLevel) ?>&user=<?= urlencode($filterUser) ?>" class="btn-primary" style="padding:10px 16px;margin-left:auto;">
+            <span class="material-symbols-outlined" style="font-size:18px;">download</span> CSV
+          </a>
         </form>
       </div>
 

@@ -121,6 +121,9 @@ $namaBulan = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agust
             <option value="<?= $y ?>" <?= $tahun===$y?'selected':'' ?>><?= $y ?></option>
             <?php endfor; ?>
           </select>
+          <a href="/simpekabjmk/export_absensi_tim.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&divisi=<?= urlencode($filterDivisi) ?>" class="btn-primary" style="padding:10px 16px;margin-left:8px;" title="Unduh CSV">
+            <span class="material-symbols-outlined" style="font-size:18px;">download</span> CSV
+          </a>
         </form>
       </div>
 

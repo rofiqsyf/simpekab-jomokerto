@@ -59,6 +59,9 @@ generateCsrfToken();
           <h1 class="section-title">Laporan Riwayat KGB</h1>
           <p class="section-subtitle">Daftar rekam jejak pemrosesan otomatis Kenaikan Gaji Berkala pegawai</p>
         </div>
+        <a href="/simpekabjmk/export_riwayat_kgb.php" class="btn-primary" style="padding:10px 20px;text-decoration:none;">
+          <span class="material-symbols-outlined" style="font-size:20px;">download</span> Unduh CSV
+        </a>
       </div>
 
       <div class="card" style="padding:0;overflow:hidden;border:1px solid #eaecf0;background:#ffffff;border-radius:16px;">

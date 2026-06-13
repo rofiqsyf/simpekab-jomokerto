@@ -28,20 +28,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $is_luar_radius = $_POST['is_luar_radius'] ?? '0';
     $keterangan_post = trim($_POST['keterangan'] ?? '');
     
-    // Fungsi internal untuk handle upload foto
-    $handleUpload = function() {
+    // Fungsi internal untuk handle upload foto secara AMAN (Mencegah Unrestricted File Upload)
+    $handleUpload = function() use (&$errors) {
         if (!isset($_FILES['bukti_foto']) || $_FILES['bukti_foto']['error'] !== UPLOAD_ERR_OK) {
+            return null; // Tidak wajib foto
+        }
+        
+        $file = $_FILES['bukti_foto'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        
+        // 1. Validasi ekstensi
+        $allowedExts = ['jpg', 'jpeg', 'png'];
+        if (!in_array($ext, $allowedExts)) {
+            $errors[] = 'Hanya file gambar (JPG/PNG) yang diperbolehkan.';
             return null;
         }
+        
+        // 2. Validasi MIME Type yang sebenarnya
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        
+        if (!in_array($mime, ['image/jpeg', 'image/png'])) {
+            $errors[] = 'File yang diunggah bukan gambar valid.';
+            return null;
+        }
+        
+        // 3. Validasi Ukuran (Max 5MB)
+        if ($file['size'] > 5 * 1024 * 1024) {
+            $errors[] = 'Ukuran maksimal file foto adalah 5MB.';
+            return null;
+        }
+
         $uploadDir = __DIR__ . '/uploads/absensi/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
-        $filename = time() . '_' . basename($_FILES['bukti_foto']['name']);
+        
+        // 4. Hashing nama file untuk mencegah eksekusi
+        $filename = time() . '_' . md5(uniqid('', true)) . '.' . $ext;
         $targetFile = $uploadDir . $filename;
-        if (move_uploaded_file($_FILES['bukti_foto']['tmp_name'], $targetFile)) {
+        
+        if (move_uploaded_file($file['tmp_name'], $targetFile)) {
             return 'uploads/absensi/' . $filename;
         }
+        
+        $errors[] = 'Gagal menyimpan file.';
         return null;
     };
 
@@ -63,6 +95,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $status = 'menunggu_konfirmasi';
                 $keterangan = $keterangan_post ?: 'Luar radius tanpa keterangan';
                 $bukti_foto = $handleUpload();
+            }
+
+            if (!empty($errors)) {
+                setFlash('error', implode('<br>', $errors));
+                $redirectUrl = $_POST['redirect_to'] ?? '/simpekabjmk/absensi.php';
+                redirect($redirectUrl);
             }
 
             $stmt = $pdo->prepare("
@@ -111,6 +149,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $bukti_foto = $handleUpload();
                 $updateFields .= ", status = ?, keterangan = ?, bukti_foto = ?";
                 array_push($updateParams, $status, $keterangan, $bukti_foto);
+            }
+
+            if (!empty($errors)) {
+                setFlash('error', implode('<br>', $errors));
+                $redirectUrl = $_POST['redirect_to'] ?? '/simpekabjmk/absensi.php';
+                redirect($redirectUrl);
             }
 
             $updateParams[] = $record['id'];
@@ -238,6 +282,9 @@ $csrfToken = generateCsrfToken();
           <h2 style="font-size:18px;font-weight:700;color:#1a1d1f;">Riwayat Absensi — <?= date('F Y') ?></h2>
           <div style="display:flex;gap:12px;align-items:center;">
             <span class="badge badge-secondary" style="font-size:13px;"><?= count($riwayat) ?> entri</span>
+            <a href="/simpekabjmk/export_absensi_saya.php" class="btn-primary" style="font-size:13px;padding:8px 16px;text-decoration:none;">
+              <span class="material-symbols-outlined" style="font-size:16px;">download</span> Unduh CSV
+            </a>
             <button class="btn-ghost" style="border:1px solid #eaecf0;background:#ffffff;font-size:13px;padding:8px 16px;" onclick="window.location.href='/simpekabjmk/layanan_pengajuan.php?jenis=koreksi'">
               <span class="material-symbols-outlined" style="font-size:16px;">edit_calendar</span> Ajukan Koreksi
             </button>

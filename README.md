@@ -1,6 +1,6 @@
 # SIMPEKAB JOMOKERTO — Sistem Informasi Manajemen Kepegawaian Kabupaten Jomokerto
 ### Mini Project PHP + MySQL + RBAC
-**Mata Kuliah:** Pemrograman Web | **Dosen:** M. Alif Muwafiq Baihaqy, M.Kom | **FASTIKOM UNSIQ**
+**Mata Kuliah:** Pemrograman Web | **Dosen:** M. Alif Muwafiq Baihaqy, M.Kom | **TEKNIK INFORMATIKA FASTIKOM UNSIQ**
 
 ---
 
@@ -97,15 +97,23 @@ simpekabjmk/
 ├── index.php                 ← Entry point → redirect
 ├── login.php                 ← Login + rate limiting + remember me
 ├── logout.php                ← Secure logout (destroy session + cookie)
+├── export_absensi_saya.php   ← Export CSV Absensi Pribadi
+├── export_absensi_tim.php    ← Export CSV Rekap Kehadiran Tim
+├── export_dashboard_eksekutif.php ← Export CSV Data Makro
+├── export_log.php            ← Export CSV Log Aktivitas Sistem
+├── export_pegawai.php        ← Export CSV Master Data Pegawai
+├── export_riwayat_kgb.php    ← Export CSV Riwayat Rekam Jejak KGB
 ├── dashboard.php             ← Dashboard (semua role, data berbeda)
 ├── profil.php                ← Profil ASN + Digital Locker
 ├── absensi.php               ← Check-in/out GPS + riwayat + koreksi absen + upload foto luar radius
 ├── absensi_tim.php           ← Rekap tim (atasan + super_admin + admin_bkpsdm)
 ├── absensi_approval.php      ← Approval Absensi Luar Radius (admin_bkpsdm + super_admin)
-├── pegawai.php               ← Daftar ASN + search/filter (admin_bkpsdm)
-├── pegawai_tambah.php        ← Tambah ASN (admin)
-├── pegawai_edit.php          ← Edit data ASN (admin)
-├── pegawai_hapus.php         ← Hapus pegawai via CASCADE (admin)
+├── pegawai.php               ← Data Pegawai (CRUD)
+├── pegawai_tambah.php        ← Form Tambah (Bcrypt hash)
+├── pegawai_edit.php          ← Form Edit
+├── pegawai_hapus.php         ← Hapus (Nonaktifkan)
+├── pegawai_import.php        ← Import Pegawai Massal via CSV
+├── pegawai_import_template.php ← Unduh Template CSV Import
 ├── kinerja_skp.php           ← Input SKP & Realisasi Bulanan (Pegawai)
 ├── kinerja_evaluasi.php      ← Evaluasi SKP Bawahan (Atasan)
 ├── layanan_pengajuan.php     ← Pengajuan Cuti / Izin (Pegawai)

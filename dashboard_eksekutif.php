@@ -76,9 +76,9 @@ foreach ($stmtGolongan->fetchAll() as $r) {
           <h1 class="section-title">Executive Insight</h1>
           <p class="section-subtitle">Data Makro, KPI ASN, dan Proyeksi Anggaran Kabupaten</p>
         </div>
-        <button class="btn-primary" style="background:#1a1d1f;color:#fff;border-radius:999px;padding:10px 20px;">
+        <a href="/simpekabjmk/export_dashboard_eksekutif.php" class="btn-primary" style="background:#1a1d1f;color:#fff;border-radius:999px;padding:10px 20px;text-decoration:none;">
           <span class="material-symbols-outlined">download</span> Unduh Laporan Eksekutif
-        </button>
+        </a>
       </div>
 
       <!-- KPI Macro Cards -->

@@ -13,14 +13,14 @@ $fg  = $avatarTextColors[$role] ?? '#0ea5e9';
 <nav id="sidebar" class="flex flex-col h-screen sticky top-0 overflow-y-auto">
 
   <!-- Brand -->
-  <div class="p-6" style="border-bottom:1px solid #eaecf0;">
+  <div class="p-5" style="border-bottom:1px solid #eaecf0;">
     <div class="flex items-center gap-3">
-      <div class="w-12 h-12 flex items-center justify-center">
+      <div class="w-10 h-10 flex-shrink-0 flex items-center justify-center">
         <img src="/simpekabjmk/assets/logo_jomokerto.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.05));" />
       </div>
-      <div>
-        <div class="font-extrabold tracking-tight" style="color:#1a1d1f;font-size:16px;line-height:1.2;">SIMPEKAB<br>JOMOKERTO</div>
-        <div style="color:#94a3b8;font-family:'Inter',sans-serif;font-weight:500;font-size:10px;margin-top:2px;line-height:1.2;max-width:90px;white-space:normal;">Sistem Informasi Kepegawaian</div>
+      <div class="flex-1">
+        <div class="font-extrabold tracking-tight" style="color:#1a1d1f;font-size:15px;line-height:1.15;margin-bottom:2px;">SIMPEKAB JOMOKERTO</div>
+        <div style="color:#64748b;font-family:'Inter',sans-serif;font-weight:500;font-size:10px;line-height:1.3;">Sistem Informasi Manajemen Kepegawaian</div>
       </div>
     </div>
   </div>

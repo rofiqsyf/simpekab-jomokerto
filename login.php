@@ -178,7 +178,7 @@ $csrfToken = generateCsrfToken();
         <img src="/simpekabjmk/assets/logo_jomokerto.png" alt="Logo" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.05));" />
       </div>
       <h1 class="section-title" style="font-size:32px;margin-bottom:8px;">SIMPEKAB JOMOKERTO</h1>
-      <p style="color:#64748b;font-weight:500;font-size:14px;letter-spacing:0.02em;">Sistem Informasi Kepegawaian Kabupaten Jomokerto</p>
+      <p style="color:#64748b;font-weight:500;font-size:14px;letter-spacing:0.02em;">Sistem Informasi Manajemen Kepegawaian Kabupaten Jomokerto</p>
     </div>
 
     <!-- Login Card -->

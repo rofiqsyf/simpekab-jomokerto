@@ -78,10 +78,16 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
           <h1 class="section-title">Data Pegawai</h1>
           <p class="section-subtitle">CRUD pegawai, manajemen akun & reset password</p>
         </div>
-        <a href="/simpekabjmk/pegawai_tambah.php" class="btn-primary" style="padding:10px 20px;">
-          <span class="material-symbols-outlined" style="font-size:20px;">person_add</span>
-          Tambah Pegawai
-        </a>
+        <div style="display:flex;gap:12px;">
+          <a href="/simpekabjmk/pegawai_import.php" class="btn-ghost" style="padding:10px 16px;background:#ffffff;border:1px solid #eaecf0;box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+            <span class="material-symbols-outlined" style="font-size:20px;">upload_file</span>
+            Import CSV
+          </a>
+          <a href="/simpekabjmk/pegawai_tambah.php" class="btn-primary" style="padding:10px 20px;">
+            <span class="material-symbols-outlined" style="font-size:20px;">person_add</span>
+            Tambah Pegawai
+          </a>
+        </div>
       </div>
 
       <!-- Role summary cards -->
@@ -132,6 +138,9 @@ foreach ($stmtCountRole->fetchAll() as $r) { $countRole[$r['role']] = $r['c']; }
             Reset
           </a>
           <?php endif; ?>
+          <a href="/simpekabjmk/export_pegawai.php?q=<?= urlencode($search) ?>&role=<?= urlencode($filterRole) ?>&divisi=<?= urlencode($filterDiv) ?>" class="btn-primary" style="padding:10px 16px;margin-left:auto;">
+            <span class="material-symbols-outlined" style="font-size:18px;">download</span> Unduh CSV
+          </a>
         </form>
       </div>
 

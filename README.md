@@ -300,4 +300,4 @@ ip_address, user_agent, level (info|warning|critical)
 
 ---
 
-*Wonosobo, Semester Genap 2025/2026 — Pemrograman Web, FASTIKOM UNSIQ*
+*Semester Genap 2025/2026 — Pemrograman Web, TEKNIK INFORMATIKA FASTIKOM UNSIQ*
